@@ -16,14 +16,13 @@ function toggle_danmukuBox() {
                 danmukuBox.autocomplete = 'off';
                 danmukuBox.style.display = 'none';
                 danmukuBox.style.position = 'absolute';
-                danmukuBox.style.zIndex = '1000'; // Ensure it appears on top
+                danmukuBox.style.zIndex = '1000';
                 danmukuBox.style.padding = '10px';
                 danmukuBox.style.fontSize = '16px';
                 danmukuBox.style.width = '500px';
                 danmukuBox.style.borderRadius = '8px';
                 danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
 
-                document.head.appendChild(placeholderStyle);
                 document.body.appendChild(danmukuBox);
             }
 
@@ -45,8 +44,13 @@ function toggle_danmukuBox() {
 }
 
 function updateDanmukuBoxPosition() {
+    if(!danmukuBox) {
+        return;
+    }
+    
     getVideoRect();
 
+    // Reopen the danmuku box if it was open when the window was resized
     if (danmukuBox.style.display === 'block') {
         danmukuBox.style.display = 'none';
         danmukuBox.style.setProperty('display', 'block', 'important');

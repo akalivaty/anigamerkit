@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniGamerKit
 // @namespace    https://github.com/akalivaty/anigamerkit
-// @version      0.1
+// @version      0.2
 // @description  Enhance your experience of anime journey with AniGamerKit!
 // @author       yuva
 // @match        https://ani.gamer.com.tw/*
