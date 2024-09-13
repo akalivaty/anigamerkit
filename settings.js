@@ -3,21 +3,21 @@
 function createFloatingButton(DEFAULT_SETTINGS) {
     const settingBtn = document.createElement('button');
     settingBtn.id = 'settingBtn';
-    settingBtn.textContent = '+'; // Set the button content to '+'
+    settingBtn.textContent = '+';
     settingBtn.style.fontWeight = 'bold';
     settingBtn.style.position = 'fixed';
     settingBtn.style.bottom = '20px';
     settingBtn.style.right = '20px';
-    settingBtn.style.width = '40px'; // Set width to make it square
-    settingBtn.style.height = '40px'; // Set height to make it square
-    settingBtn.style.padding = '0'; // Remove padding
+    settingBtn.style.width = '40px';
+    settingBtn.style.height = '40px';
+    settingBtn.style.padding = '0';
     settingBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
     settingBtn.style.color = 'rgba(64, 195, 221, 0.9)';
     settingBtn.style.border = 'none';
-    settingBtn.style.borderRadius = '50%'; // Make it circular
+    settingBtn.style.borderRadius = '50%';
     settingBtn.style.cursor = 'pointer';
     settingBtn.style.zIndex = '1001';
-    settingBtn.style.fontSize = '24px'; // Increase font size for better visibility
+    settingBtn.style.fontSize = '24px';
     settingBtn.style.display = 'flex';
     settingBtn.style.alignItems = 'center';
     settingBtn.style.justifyContent = 'center';
@@ -37,7 +37,7 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
         showingPanel.classList.add('fade-out');
         setTimeout(() => {
             showingPanel.remove();
-        }, 500); // Wait for the fade-out effect to complete
+        }, 500);
     } else {
         settingBtn.style.transform = 'rotate(360deg)';
         createSettingsPanel(DEFAULT_SETTINGS);
@@ -66,7 +66,7 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     settingPanel.style.fontSize = '14px';
     settingPanel.style.transition = 'opacity 0.2s';
 
-    settingPanel.style.opacity = '0'; // Set initial opacity to 0
+    settingPanel.style.opacity = '0';
     document.body.appendChild(settingPanel);
     setTimeout(() => {
         settingPanel.classList.add('fade-in');

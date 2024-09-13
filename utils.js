@@ -4,11 +4,12 @@ function injectStyles() {
     const css = `
         .fade-in {
             opacity: 1 !important;
-            transition: opacity 0.5s;
         }
         .fade-out {
             opacity: 0 !important;
-            transition: opacity 0.5s;
+        }
+        #custom-input-box::placeholder {
+        color: rgba(0, 0, 0, 0.5); /* 50% opacity */
         }
     `;
     const style = document.createElement('style');
@@ -28,7 +29,6 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
         console.log("here is video page, " + current_url);
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
-            // Listen for fullscreen changes
             document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
 
             toggle_danmukuBox();
@@ -55,20 +55,20 @@ function showFloatingMessage(message) {
     msg.style.bottom = '20px';
     msg.style.left = '50%';
     msg.style.transform = 'translateX(-50%)';
-    msg.style.fontSize = '24px'; // Increased font size
-    msg.style.fontWeight = 'bold'; // Make text bold
+    msg.style.fontSize = '24px';
+    msg.style.fontWeight = 'bold';
     msg.style.padding = '20px';
     msg.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
     msg.style.color = 'white';
     msg.style.borderRadius = '10px';
     msg.style.zIndex = '1001';
-    msg.style.opacity = '0'; // Start with full transparency
-    msg.style.transition = 'opacity 0.3s'; // Set transition for fade effects
+    msg.style.opacity = '0';
+    msg.style.transition = 'opacity 0.3s';
 
 
     document.body.appendChild(msg);
 
-    msg.classList.add('fade-in'); // Trigger fade-in effect
+    msg.classList.add('fade-in');
 
     // Trigger the fade-out effect after 2 seconds (2000 ms)
     setTimeout(() => {
