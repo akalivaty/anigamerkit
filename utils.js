@@ -8,9 +8,7 @@ function injectStyles() {
         .fade-out {
             opacity: 0 !important;
         }
-        #custom-input-box::placeholder {
-        color: rgba(0, 0, 0, 0.5); /* 50% opacity */
-        }
+            
     `;
     const style = document.createElement('style');
     style.textContent = css;
