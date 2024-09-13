@@ -23,13 +23,6 @@ function toggle_danmukuBox() {
                 danmukuBox.style.borderRadius = '8px';
                 danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
 
-                // Add CSS for placeholder transparency
-                const placeholderStyle = document.createElement('style');
-                placeholderStyle.innerHTML = `
-                    #custom-input-box::placeholder {
-                        color: rgba(0, 0, 0, 0.5); /* 50% opacity */
-                    }
-                `;
                 document.head.appendChild(placeholderStyle);
                 document.body.appendChild(danmukuBox);
             }
@@ -51,11 +44,9 @@ function toggle_danmukuBox() {
     });
 }
 
-// Function to update danmukuBox position
 function updateDanmukuBoxPosition() {
     getVideoRect();
 
-    // reset danmukuBox position
     if (danmukuBox.style.display === 'block') {
         danmukuBox.style.display = 'none';
         danmukuBox.style.setProperty('display', 'block', 'important');
@@ -69,14 +60,13 @@ function getVideoRect() {
         const videoRect = videoElement.getBoundingClientRect();
         danmukuBox.style.top = `${videoRect.top + videoRect.height / 2}px`;
         danmukuBox.style.left = `${videoRect.left + videoRect.width / 2}px`;
-        danmukuBox.style.transform = 'translate(-50%, -50%)'; // Center the box
+        danmukuBox.style.transform = 'translate(-50%, -50%)';
     } else {
         console.error('Video element not found');
     }
 }
 
 function listenDanmuku(event) {
-    // Listen for 'Enter' key press
     if (event.key === 'Enter') {
         const danmukuBox = document.querySelector('#custom-input-box');
         if (danmukuBox) {

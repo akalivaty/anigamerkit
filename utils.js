@@ -4,11 +4,12 @@ function injectStyles() {
     const css = `
         .fade-in {
             opacity: 1 !important;
-            transition: opacity 0.5s;
         }
         .fade-out {
             opacity: 0 !important;
-            transition: opacity 0.5s;
+        }
+        #custom-input-box::placeholder {
+        color: rgba(0, 0, 0, 0.5); /* 50% opacity */
         }
     `;
     const style = document.createElement('style');
