@@ -1,0 +1,174 @@
+'use strict';
+
+function injectStyles() {
+    const css = `
+        .fade-in {
+            opacity: 1 !important;
+            transition: opacity 0.5s;
+        }
+        .fade-out {
+            opacity: 0 !important;
+            transition: opacity 0.5s;
+        }
+    `;
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
+    const current_url = window.location.href;
+
+    if (URL_PATTERNS.HOME_PAGE.test(current_url)) {
+        console.log("here is homepage");
+        if (GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu)) {
+            triggerShowMoreButton();
+        }
+    } else if (URL_PATTERNS.VIDEO_PAGE.test(current_url) || URL_PATTERNS.PARTY_PAGE.test(current_url)) {
+        console.log("here is video page, " + current_url);
+
+        if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
+            // Listen for fullscreen changes
+            document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
+
+            toggle_danmukuBox();
+        }
+
+    } else {
+        console.log("test failed");
+    }
+}
+
+function triggerShowMoreButton() {
+    const showMoreBtn = document.querySelector('.btn-show-more');
+    if (showMoreBtn) {
+        showMoreBtn.click();
+    } else {
+        console.error('Button with class "btn-show-more" not found.');
+    }
+}
+
+function showFloatingMessage(message) {
+    const msg = document.createElement('div');
+    msg.textContent = message;
+    msg.style.position = 'fixed';
+    msg.style.bottom = '20px';
+    msg.style.left = '50%';
+    msg.style.transform = 'translateX(-50%)';
+    msg.style.fontSize = '24px'; // Increased font size
+    msg.style.fontWeight = 'bold'; // Make text bold
+    msg.style.padding = '20px';
+    msg.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    msg.style.color = 'white';
+    msg.style.borderRadius = '10px';
+    msg.style.zIndex = '1001';
+    msg.style.opacity = '0'; // Start with full transparency
+    msg.style.transition = 'opacity 0.3s'; // Set transition for fade effects
+
+
+    document.body.appendChild(msg);
+
+    msg.classList.add('fade-in'); // Trigger fade-in effect
+
+    // Trigger the fade-out effect after 2 seconds (2000 ms)
+    setTimeout(() => {
+        msg.classList.remove('fade-in');
+        msg.classList.add('fade-out'); // Trigger fade-out effect
+    }, 2000);
+
+    // Remove the message from the DOM after the fade-out completes
+    setTimeout(() => {
+        if (msg && msg.parentNode) {
+            msg.parentNode.removeChild(msg);
+        }
+    }, 2500); // Total duration (fade-in + visible + fade-out)
+}
+
+// function getCSRFToken() {
+//     return fetch('https://ani.gamer.com.tw/ajax/getCSRFToken.php', {
+//         method: 'GET',
+//         credentials: 'include', // Include cookies in the request
+//         headers: {
+//             'cache-control': 'max-age=0',
+//             'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+//             'dnt': '1',
+//             'sec-ch-ua-mobile': '?0',
+//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
+//             'sec-ch-ua-platform': '"Windows"',
+//             'accept': '*/*',
+//             'sec-fetch-site': 'same-origin',
+//             'sec-fetch': 'cors',
+//             'sec-fetch-dest': 'empty',
+//             'referer': window.location.href,
+//             'accept-encoding': 'gzip, deflate, br, zstd',
+//             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
+//             'cookie': document.cookie // Include all cookies
+//         }
+//     })
+//         .then(response => response.text()) // Get response as text first
+//         .then(text => {
+//             console.log('Response text:', text); // Log the response text for debugging
+//             return text;
+//         })
+//         .catch(error => {
+//             console.error('Error fetching CSRF token:', error);
+//         });
+// }
+
+// function sendDanmuku_request(danmuku) {
+
+//     const timeElement = document.querySelector('.vjs-current-time-display');
+//     const currentTimeInMilis = timeElement ? (() => {
+//         const timeText = timeElement.textContent; // e.g. '16:34'
+//         const [minutes, seconds] = timeText.split(':').map(Number); // e.g. [16, 34]
+//         return Number.isNaN(minutes) || Number.isNaN(seconds) ? '0' : ((minutes * 60 + seconds) * 10).toString();
+//     })() : '0';
+
+//     const token = getCSRFToken().then(token => {
+//         console.log('CSRF Token:', token);
+//     });
+
+//     const data = new URLSearchParams({
+//         sn: current_url.split('sn=')[1],
+//         content: danmuku,
+//         color: '#FFFFFF',
+//         position: '0',
+//         size: '1',
+//         time: currentTimeInMilis,
+//         token: token
+//     });
+
+//     fetch('https://ani.gamer.com.tw/ajax/danmuSet.php', {
+//         method: 'POST',
+//         headers: {
+//             'content-length': data.toString().length,
+//             'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
+//             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+//             'dnt': '1',
+//             'sec-ch-ua-mobile': '?0',
+//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
+//             'sec-ch-ua-platform': '"Windows"',
+//             'accept': '*/*',
+//             'origin': 'https://ani.gamer.com.tw',
+//             'sec-fetch-site': 'same-origin',
+//             'sec-fetch-mode': 'cors',
+//             'sec-fetch-dest': 'empty',
+//             'referer': 'https://ani.gamer.com.tw/animeVideo.php?sn=39261',
+//             'accept-encoding': 'gzip, deflate, br, zstd',
+//             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
+//             'cookie': document.cookie // Include all cookies
+//         },
+//         body: data.toString()
+//     })
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.ok === 1) {
+//                 console.log('Success:', data);
+//             } else {
+//                 console.error('Failed:', data);
+//             }
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//         });
+// }

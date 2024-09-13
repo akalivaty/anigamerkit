@@ -1,0 +1,9 @@
+.fade-in {
+    opacity: 1 !important;
+    transition: opacity 0.5s;
+}
+
+.fade-out {
+    opacity: 0 !important;
+    transition: opacity 0.5s;
+}
