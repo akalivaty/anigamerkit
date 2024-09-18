@@ -30,13 +30,16 @@ function createFloatingButton(DEFAULT_SETTINGS) {
 
 function toggleSettingsPanel(DEFAULT_SETTINGS) {
     const settingBtn = document.querySelector('#settingBtn');
-    let showingPanel = document.getElementById('settings-panel');
-    if (showingPanel) {
+    let settingPanel = document.getElementById('setting-panel');
+    if (settingPanel) {
         settingBtn.style.transform = 'rotate(-360deg)';
-        showingPanel.classList.remove('fade-in');
-        showingPanel.classList.add('fade-out');
+
+        requestAnimationFrame(() => {
+            settingPanel.style.opacity = '0';
+        });
+
         setTimeout(() => {
-            showingPanel.remove();
+            settingPanel.remove();
         }, 500);
     } else {
         settingBtn.style.transform = 'rotate(360deg)';
@@ -48,9 +51,10 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
 
     let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
     let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
+    let enableSpeedControlShortcut = GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut);
 
     const settingPanel = document.createElement('div');
-    settingPanel.id = 'settings-panel';
+    settingPanel.id = 'setting-panel';
     settingPanel.style.position = 'fixed';
     settingPanel.style.right = '20px';
     settingPanel.style.bottom = '60px';
@@ -64,13 +68,15 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     settingPanel.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
     settingPanel.style.zIndex = '1001';
     settingPanel.style.fontSize = '14px';
+    settingPanel.style.opacity = '0';
     settingPanel.style.transition = 'opacity 0.2s';
 
-    settingPanel.style.opacity = '0';
     document.body.appendChild(settingPanel);
-    setTimeout(() => {
-        settingPanel.classList.add('fade-in');
-    }, 0); // Trigger fade-in effect
+
+    // Trigger the fade-in effect
+    requestAnimationFrame(() => {
+        settingPanel.style.opacity = '1';
+    });
 
     const title = document.createElement('h3');
     title.textContent = 'Settings';
@@ -80,61 +86,19 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     title.style.userSelect = 'none';
     settingPanel.appendChild(title);
 
-    // Container for options
-    const option_container = document.createElement('div');
-    option_container.style.display = 'flex';
-    option_container.style.flexDirection = 'column';
-    option_container.style.marginTop = '10px';
+    // Create option container to hold all options
+    const optionContainer = createOptionContainer();
 
-    // Option to enable/disable auto expand menu
-    const container_AEM = document.createElement('div');
-    container_AEM.style.display = 'flex';
-    container_AEM.style.alignItems = 'center';
-    container_AEM.style.marginBottom = '10px';
+    // Create containers for user option
+    const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', '首頁自動展開更多影片', autoExpandMenu);
+    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
+    const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
 
-    const checkBox_AEM = document.createElement('input');
-    checkBox_AEM.id = 'autoExpandMenuCheckbox';
-    checkBox_AEM.type = 'checkbox';
-    checkBox_AEM.checked = autoExpandMenu;
-    checkBox_AEM.style.width = '20px';
-    checkBox_AEM.style.height = '20px';
+    optionContainer.appendChild(autoExpandMenuContainer.container);
+    optionContainer.appendChild(centeredDanmukuBoxContainer.container);
+    optionContainer.appendChild(speedControlShortcutContainer.container);
 
-    const label_AEM = document.createElement('label');
-    label_AEM.textContent = 'Enable Auto Expand Menu';
-    label_AEM.style.fontSize = '16px';
-    label_AEM.style.marginLeft = '5px';
-    label_AEM.htmlFor = 'autoExpandMenuCheckbox';
-    label_AEM.style.userSelect = 'none';
-
-    container_AEM.appendChild(checkBox_AEM);
-    container_AEM.appendChild(label_AEM);
-
-    // Option to enable/disable centered danmuku box
-    const container_CDB = document.createElement('div');
-    container_CDB.style.display = 'flex';
-    container_CDB.style.alignItems = 'center';
-
-    const checkBox_CDB = document.createElement('input');
-    checkBox_CDB.id = 'centeredDanmukuBoxCheckbox';
-    checkBox_CDB.type = 'checkbox';
-    checkBox_CDB.checked = enableCenteredDanmukuBox;
-    checkBox_CDB.style.width = '20px';
-    checkBox_CDB.style.height = '20px';
-
-    const label_CDB = document.createElement('label');
-    label_CDB.textContent = 'Enable Centered Danmuku Box';
-    label_CDB.style.fontSize = '16px';
-    label_CDB.style.marginLeft = '5px';
-    label_CDB.htmlFor = 'centeredDanmukuBoxCheckbox';
-    label_CDB.style.userSelect = 'none';
-
-    container_CDB.appendChild(checkBox_CDB);
-    container_CDB.appendChild(label_CDB);
-
-    option_container.appendChild(container_AEM);
-    option_container.appendChild(container_CDB);
-
-    settingPanel.appendChild(option_container);
+    settingPanel.appendChild(optionContainer);
 
     // Apply button
     const applyBtn = document.createElement('button');
@@ -151,10 +115,15 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     applyBtn.style.cursor = 'pointer';
 
     applyBtn.onclick = () => {
-        autoExpandMenu = checkBox_AEM.checked;
+        autoExpandMenu = autoExpandMenuContainer.checkBox.checked;
         GM_setValue('autoExpandMenu', autoExpandMenu);
-        enableCenteredDanmukuBox = checkBox_CDB.checked;
-        GM_setValue('enableInputBox', enableCenteredDanmukuBox);
+
+        enableCenteredDanmukuBox = centeredDanmukuBoxContainer.checkBox.checked;
+        GM_setValue('enableCenteredDanmukuBox', enableCenteredDanmukuBox);
+
+        enableSpeedControlShortcut = speedControlShortcutContainer.checkBox.checked;
+        GM_setValue('enableSpeedControlShortcut', enableSpeedControlShortcut);
+
 
         showFloatingMessage('Settings have been applied.');
     };
@@ -162,4 +131,38 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     settingPanel.appendChild(applyBtn);
 
     document.body.appendChild(settingPanel);
+}
+
+function createOptionContainer() {
+    const optionContainer = document.createElement('div');
+    optionContainer.style.display = 'flex';
+    optionContainer.style.flexDirection = 'column';
+    optionContainer.style.marginTop = '10px';
+    return optionContainer;
+}
+
+function createOption(elementID, labelText, isChecked) {
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.marginBottom = '10px';
+
+    const checkBox = document.createElement('input');
+    checkBox.id = elementID;
+    checkBox.type = 'checkbox';
+    checkBox.checked = isChecked;
+    checkBox.style.width = '20px';
+    checkBox.style.height = '20px';
+
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    label.style.fontSize = '16px';
+    label.style.marginLeft = '5px';
+    label.htmlFor = elementID;
+    label.style.userSelect = 'none';
+
+    container.appendChild(checkBox);
+    container.appendChild(label);
+
+    return { container, checkBox };
 }

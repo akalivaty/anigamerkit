@@ -32,11 +32,14 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
             document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
             document.addEventListener('keydown', toggleDanmukuBox);
+        }
+
+        if (GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut)) {
             document.addEventListener('keydown', modifySpeed);
         }
 
     } else {
-        console.log("test failed");
+        console.log(`failed at ${current_url}`);
     }
 }
 
