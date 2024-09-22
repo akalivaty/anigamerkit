@@ -38,6 +38,8 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
             document.addEventListener('keydown', modifySpeed);
         }
 
+        document.addEventListener('keydown', skip89s);
+
     } else {
         console.log(`failed at ${current_url}`);
     }
@@ -72,6 +74,19 @@ function modifySpeed(event) {
             video.playbackRate = speeds[currentSpeedIndex];
             showFloatingMessage(video.playbackRate + "X", 500, 'bottom-right');
         }
+    }
+}
+
+function skip89s(event) {
+    const video = document.querySelector('video');
+
+    if (video.duration > 10) {
+        if (event.ctrlKey && event.key === 'F2') {
+            video.currentTime += 89;
+        }
+    }
+    else {
+        return;
     }
 }
 
