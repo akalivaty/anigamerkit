@@ -27,7 +27,7 @@ window.onload = function () {
 
     const URL_PATTERNS = {
         HOME_PAGE: /https:\/\/ani\.gamer\.com\.tw\/$/gm,
-        VIDEO_PAGE: /https:\/\/ani\.gamer\.com\.tw\/animeVideo\.php?sn[=\d]+$/gm,
+        VIDEO_PAGE: /https:\/\/ani\.gamer\.com\.tw\/animeVideo\.php\?sn=\d+$/gm,
         PARTY_PAGE: /https:\/\/ani\.gamer\.com\.tw\/party[.=?\w]+$/gm,
         PAYMENT_PAGE: /https:\/\/ani.gamer.com.tw\/animePay2\.php\?itemSn=\d+$/gm
     };
