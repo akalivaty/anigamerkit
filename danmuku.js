@@ -36,7 +36,7 @@ function toggleDanmukuBox(event) {
             console.log('Hiding danmukuBox');
             danmukuBox.style.display = 'none';
             document.querySelector('video').focus();
-            window.removeEventListener('keydown', listenDanmuku);
+            document.removeEventListener('keydown', listenDanmuku);
         }
     }
 }

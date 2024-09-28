@@ -40,6 +40,15 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
 
         document.addEventListener('keydown', skip89s);
 
+    } else if (URL_PATTERNS.PAYMENT_PAGE.test(current_url)) {
+        // If payment page
+        console.log("here is video page, " + current_url);
+
+        if (GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo)) {
+            const phoneBarcode = GM_getValue('phoneBarcode', null);
+            autoInputPaymentInfo(phoneBarcode);
+        }
+
     } else {
         console.log(`failed at ${current_url}`);
     }
@@ -88,6 +97,30 @@ function skip89s(event) {
     else {
         return;
     }
+}
+
+function autoInputPaymentInfo(phoneBarcode = null) {
+
+    const invoiceChoice = document.querySelector('.payment-form-invoice');
+    if (invoiceChoice) {
+        const noDonateInvoice = document.querySelector('#e2');
+        noDonateInvoice.click();
+        const invoiceTypeSelect = document.querySelector('select.anime-select--invoice');
+        if (invoiceTypeSelect) {
+            invoiceTypeSelect.value = '3';
+            invoiceTypeSelect.dispatchEvent(new Event('change'));
+            const phoneBarcodeInput = document.querySelector('input[name="cell-cardno"]');
+            if (phoneBarcodeInput && phoneBarcode) {
+                phoneBarcodeInput.value = phoneBarcode;
+            }
+        }
+    }
+
+    // auto check all checkboxes
+    const checkBoxList = document.querySelectorAll('input.checkBtns');
+    checkBoxList.forEach(checkbox => {
+        checkbox.click();
+    });
 }
 
 function showFloatingMessage(message, duration = 2000, position = 'bottom-center') {

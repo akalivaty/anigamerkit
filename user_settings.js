@@ -52,6 +52,8 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
     let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
     let enableSpeedControlShortcut = GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut);
+    let enableAutoInputPaymentInfo = GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo);
+    let phoneBarcode = GM_getValue('phoneBarcode', DEFAULT_SETTINGS.phoneBarcode);
 
     const settingPanel = document.createElement('div');
     settingPanel.id = 'setting-panel';
@@ -93,10 +95,12 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', '首頁自動展開更多影片', autoExpandMenu);
     const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
     const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
+    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', '自動填入發票資訊, 載具:', enableAutoInputPaymentInfo, true, phoneBarcode);
 
     optionContainer.appendChild(autoExpandMenuContainer.container);
     optionContainer.appendChild(centeredDanmukuBoxContainer.container);
     optionContainer.appendChild(speedControlShortcutContainer.container);
+    optionContainer.appendChild(autoInputPaymentInfoContainer.container);
 
     settingPanel.appendChild(optionContainer);
 
@@ -124,6 +128,13 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
         enableSpeedControlShortcut = speedControlShortcutContainer.checkBox.checked;
         GM_setValue('enableSpeedControlShortcut', enableSpeedControlShortcut);
 
+        enableAutoInputPaymentInfo = autoInputPaymentInfoContainer.checkBox.checked;
+        GM_setValue('enableAutoInputPaymentInfo', enableAutoInputPaymentInfo);
+
+        phoneBarcode = document.querySelector('#barcode').value;
+        console.log('barcode:', phoneBarcode);
+        GM_setValue('barcode', phoneBarcode);
+
 
         showFloatingMessage('Settings have been applied.');
     };
@@ -141,7 +152,7 @@ function createOptionContainer() {
     return optionContainer;
 }
 
-function createOption(elementID, labelText, isChecked) {
+function createOption(elementID, labelText, isChecked, needInputBox = false, inputBoxValue = null) {
     const container = document.createElement('div');
     container.style.display = 'flex';
     container.style.alignItems = 'center';
@@ -163,6 +174,30 @@ function createOption(elementID, labelText, isChecked) {
 
     container.appendChild(checkBox);
     container.appendChild(label);
+
+    if (needInputBox) {
+        const inputBox = document.createElement('input');
+        inputBox.id = 'barcode';
+        inputBox.type = 'text';
+        inputBox.style.marginLeft = '3px';
+        inputBox.style.width = '100px';
+        inputBox.style.height = '25px';
+        inputBox.style.border = '1px solid #ccc';
+        inputBox.style.borderRadius = '5px';
+        inputBox.style.padding = '5px';
+        inputBox.style.fontSize = '16px';
+        inputBox.style.outline = 'none';
+        inputBox.autocomplete = 'off';
+
+        if (inputBoxValue) {
+            inputBox.placeholder = inputBoxValue;
+        } else {
+            inputBox.placeholder = '未輸入';
+        }
+
+        container.appendChild(inputBox);
+    }
+
 
     return { container, checkBox };
 }

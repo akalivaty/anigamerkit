@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniGamerKit
 // @namespace    https://github.com/akalivaty/anigamerkit
-// @version      0.2
+// @version      0.3
 // @description  Enhance your experience of anime journey with AniGamerKit!
 // @author       yuva
 // @match        https://ani.gamer.com.tw/*
@@ -20,13 +20,16 @@ window.onload = function () {
     const DEFAULT_SETTINGS = {
         autoExpandMenu: true,
         enableCenteredDanmukuBox: true,
-        enableSpeedControlShortcut: true
+        enableSpeedControlShortcut: true,
+        enableAutoInputPaymentInfo: true,
+        phoneBarcode: "",
     };
 
     const URL_PATTERNS = {
-        HOME_PAGE: /https:\/\/ani.gamer.com.tw\/$/gm,
-        VIDEO_PAGE: /https:\/\/ani.gamer.com.tw\/animeVideo.php?sn[=\d]+$/gm,
-        PARTY_PAGE: /https:\/\/ani.gamer.com.tw\/party[.=?\w]+$/gm
+        HOME_PAGE: /https:\/\/ani\.gamer\.com\.tw\/$/gm,
+        VIDEO_PAGE: /https:\/\/ani\.gamer\.com\.tw\/animeVideo\.php?sn[=\d]+$/gm,
+        PARTY_PAGE: /https:\/\/ani\.gamer\.com\.tw\/party[.=?\w]+$/gm,
+        PAYMENT_PAGE: /https:\/\/ani.gamer.com.tw\/animePay2\.php\?itemSn=\d+$/gm
     };
 
     injectStyles();
