@@ -74,14 +74,14 @@ function modifySpeed(event) {
         if (currentSpeedIndex < speeds.length - 1) {
             currentSpeedIndex++;
             video.playbackRate = speeds[currentSpeedIndex];
-            showFloatingMessage(video.playbackRate + "X", 500, 'bottom-right');
+            showFloatingMessage(video.playbackRate + "X", 500, 'video-bottom-right');
         }
     } else if (event.shiftKey && event.key === '<') {
         // speed down
         if (currentSpeedIndex > 0) {
             currentSpeedIndex--;
             video.playbackRate = speeds[currentSpeedIndex];
-            showFloatingMessage(video.playbackRate + "X", 500, 'bottom-right');
+            showFloatingMessage(video.playbackRate + "X", 500, 'video-bottom-right');
         }
     }
 }
@@ -143,6 +143,8 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
     msg.style.zIndex = '1001';
     msg.style.opacity = '0';
     msg.style.transition = 'opacity 0.3s';
+    
+    document.documentElement.appendChild(msg);
 
     switch (position) {
         case 'bottom-center':
@@ -160,6 +162,16 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
             msg.style.left = '5%';
             msg.style.transform = 'none';
             break;
+        case 'video-bottom-right':
+            const video = document.querySelector('video');
+            if (video) {
+                console.log('msg.offsetHeight: ', msg.offsetHeight);
+                const videoRect = video.getBoundingClientRect();
+                msg.style.top = `${videoRect.bottom - msg.offsetHeight - 20}px`;
+                msg.style.left = `${videoRect.right - msg.offsetWidth - 20}px`;
+                msg.style.transform = 'none';
+            }
+            break;
         default:
             msg.style.bottom = '20px';
             msg.style.left = '50%';
@@ -168,7 +180,6 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
     }
 
 
-    document.documentElement.appendChild(msg);
 
     // Trigger the fade-in effect
     requestAnimationFrame(() => {

@@ -17,10 +17,12 @@ function toggleDanmukuBox(event) {
             danmukuBox.style.position = 'absolute';
             danmukuBox.style.zIndex = '1000';
             danmukuBox.style.padding = '10px';
-            danmukuBox.style.fontSize = '16px';
             danmukuBox.style.width = '500px';
             danmukuBox.style.borderRadius = '8px';
             danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+            danmukuBox.style.fontSize = '16px';
+            danmukuBox.style.color = 'black';
+            danmukuBox.style.fontWeight = 'bold';
 
             document.documentElement.appendChild(danmukuBox);
         }
@@ -84,10 +86,18 @@ function listenDanmuku(event) {
     }
 }
 
-function sendDanmuku(danmuku) {
+function sendDanmuku(danmuku, autoCloseInputBox = true) {
     const danmuInput = document.querySelector('#danmutxt');
     const sendButton = document.querySelector('.danmu-send_btn');
     danmuInput.value = danmuku;
     sendButton.click();
     console.log('Danmuku sent:', danmuku);
+
+    if (autoCloseInputBox) {
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'F1',
+            bubbles: true,
+            cancelable: true
+        }));
+    }
 }

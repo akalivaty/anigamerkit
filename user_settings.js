@@ -136,7 +136,7 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
         GM_setValue('barcode', phoneBarcode);
 
 
-        showFloatingMessage('Settings have been applied.');
+        showFloatingMessage('已套用設定');
     };
 
     settingPanel.appendChild(applyBtn);
