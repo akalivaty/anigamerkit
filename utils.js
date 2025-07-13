@@ -15,7 +15,14 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
+/**
+ * Filter the page based on URL patterns and apply settings.
+ * @param {Object} URL_PATTERNS - An object containing regex patterns for different pages
+ * @param {Object} DEFAULT_SETTINGS - An object containing user's settings for the script
+ * @returns {void}
+ **/
 function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
+
     const current_url = window.location.href;
 
     if (URL_PATTERNS.HOME_PAGE.test(current_url)) {
@@ -143,7 +150,7 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
     msg.style.zIndex = '1001';
     msg.style.opacity = '0';
     msg.style.transition = 'opacity 0.3s';
-    
+
     document.documentElement.appendChild(msg);
 
     switch (position) {
@@ -199,91 +206,11 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
     }, duration + 500); // Total duration (fade-in + visible + fade-out)
 }
 
-// function getCSRFToken() {
-//     return fetch('https://ani.gamer.com.tw/ajax/getCSRFToken.php', {
-//         method: 'GET',
-//         credentials: 'include', // Include cookies in the request
-//         headers: {
-//             'cache-control': 'max-age=0',
-//             'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-//             'dnt': '1',
-//             'sec-ch-ua-mobile': '?0',
-//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
-//             'sec-ch-ua-platform': '"Windows"',
-//             'accept': '*/*',
-//             'sec-fetch-site': 'same-origin',
-//             'sec-fetch': 'cors',
-//             'sec-fetch-dest': 'empty',
-//             'referer': window.location.href,
-//             'accept-encoding': 'gzip, deflate, br, zstd',
-//             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-//             'cookie': document.cookie // Include all cookies
-//         }
-//     })
-//         .then(response => response.text()) // Get response as text first
-//         .then(text => {
-//             console.log('Response text:', text); // Log the response text for debugging
-//             return text;
-//         })
-//         .catch(error => {
-//             console.error('Error fetching CSRF token:', error);
-//         });
-// }
-
-// function sendDanmuku_request(danmuku) {
-
-//     const timeElement = document.querySelector('.vjs-current-time-display');
-//     const currentTimeInMilis = timeElement ? (() => {
-//         const timeText = timeElement.textContent; // e.g. '16:34'
-//         const [minutes, seconds] = timeText.split(':').map(Number); // e.g. [16, 34]
-//         return Number.isNaN(minutes) || Number.isNaN(seconds) ? '0' : ((minutes * 60 + seconds) * 10).toString();
-//     })() : '0';
-
-//     const token = getCSRFToken().then(token => {
-//         console.log('CSRF Token:', token);
-//     });
-
-//     const data = new URLSearchParams({
-//         sn: current_url.split('sn=')[1],
-//         content: danmuku,
-//         color: '#FFFFFF',
-//         position: '0',
-//         size: '1',
-//         time: currentTimeInMilis,
-//         token: token
-//     });
-
-//     fetch('https://ani.gamer.com.tw/ajax/danmuSet.php', {
-//         method: 'POST',
-//         headers: {
-//             'content-length': data.toString().length,
-//             'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"',
-//             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-//             'dnt': '1',
-//             'sec-ch-ua-mobile': '?0',
-//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
-//             'sec-ch-ua-platform': '"Windows"',
-//             'accept': '*/*',
-//             'origin': 'https://ani.gamer.com.tw',
-//             'sec-fetch-site': 'same-origin',
-//             'sec-fetch-mode': 'cors',
-//             'sec-fetch-dest': 'empty',
-//             'referer': 'https://ani.gamer.com.tw/animeVideo.php?sn=39261',
-//             'accept-encoding': 'gzip, deflate, br, zstd',
-//             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-//             'cookie': document.cookie // Include all cookies
-//         },
-//         body: data.toString()
-//     })
-//         .then(response => response.json())
-//         .then(data => {
-//             if (data.ok === 1) {
-//                 console.log('Success:', data);
-//             } else {
-//                 console.error('Failed:', data);
-//             }
-//         })
-//         .catch(error => {
-//             console.error('Error:', error);
-//         });
-// }
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    return null;
+}

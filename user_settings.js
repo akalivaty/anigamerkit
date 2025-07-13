@@ -43,11 +43,12 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
         }, 500);
     } else {
         settingBtn.style.transform = 'rotate(360deg)';
-        createSettingsPanel(DEFAULT_SETTINGS);
+        createSettingsPanel(DEFAULT_SETTINGS, getCookie('ANIME_dark_theme'));
     }
 }
 
-function createSettingsPanel(DEFAULT_SETTINGS) {
+function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
+    console.log('isDarkMode:', isDarkMode);
 
     let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
     let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
@@ -81,6 +82,9 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     });
 
     const title = document.createElement('h3');
+    if (isDarkMode) {
+        title.style.color = 'black';
+    }
     title.textContent = 'Settings';
     title.style.fontWeight = 'bold';
     title.style.textAlign = 'center';
@@ -92,10 +96,10 @@ function createSettingsPanel(DEFAULT_SETTINGS) {
     const optionContainer = createOptionContainer();
 
     // Create containers for user option
-    const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', '首頁自動展開更多影片', autoExpandMenu);
-    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
-    const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
-    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', '自動填入發票資訊, 載具:', enableAutoInputPaymentInfo, true, phoneBarcode);
+    const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', isDarkMode, '首頁自動展開更多影片', autoExpandMenu);
+    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
+    const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', isDarkMode, '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
+    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '自動填入發票資訊, 載具:', enableAutoInputPaymentInfo, true, phoneBarcode);
 
     optionContainer.appendChild(autoExpandMenuContainer.container);
     optionContainer.appendChild(centeredDanmukuBoxContainer.container);
@@ -152,7 +156,7 @@ function createOptionContainer() {
     return optionContainer;
 }
 
-function createOption(elementID, labelText, isChecked, needInputBox = false, inputBoxValue = null) {
+function createOption(elementID, isDarkMode, labelText, isChecked, needInputBox = false, inputBoxValue = null) {
     const container = document.createElement('div');
     container.style.display = 'flex';
     container.style.alignItems = 'center';
@@ -166,6 +170,9 @@ function createOption(elementID, labelText, isChecked, needInputBox = false, inp
     checkBox.style.height = '20px';
 
     const label = document.createElement('label');
+    if (isDarkMode) {
+        label.style.color = 'black';
+    }
     label.textContent = labelText;
     label.style.fontSize = '16px';
     label.style.marginLeft = '5px';
