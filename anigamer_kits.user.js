@@ -9,6 +9,7 @@
 // @require      https://raw.githubusercontent.com/akalivaty/anigamerkit/main/user_settings.js
 // @require      https://raw.githubusercontent.com/akalivaty/anigamerkit/main/utils.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=gamer.com.tw
+// @run-at document-start
 // @grant        GM_registerMenuCommand
 // @grant        GM_addValueChangeListener
 // @grant        GM_setValue
@@ -19,6 +20,7 @@ window.onload = function () {
 
     const DEFAULT_SETTINGS = {
         autoExpandMenu: true,
+        showVideoPoster: true,
         enableCenteredDanmukuBox: true,
         enableSpeedControlShortcut: true,
         enableAutoInputPaymentInfo: true,
@@ -35,6 +37,6 @@ window.onload = function () {
     };
 
     injectStyles();
-    createFloatingButton(DEFAULT_SETTINGS);
     filterPage(URL_PATTERNS, DEFAULT_SETTINGS);
+    createFloatingButton(DEFAULT_SETTINGS);
 }

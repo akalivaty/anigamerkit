@@ -22,7 +22,6 @@ function toggleDanmukuBox(event) {
             danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
             danmukuBox.style.fontSize = '16px';
             danmukuBox.style.color = 'black';
-            danmukuBox.style.fontWeight = 'bold';
 
             document.documentElement.appendChild(danmukuBox);
         }

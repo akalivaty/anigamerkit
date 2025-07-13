@@ -54,6 +54,7 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
  **/
 function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
     let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
+    let showVideoPoster = GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster);
     let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
     let enableSpeedControlShortcut = GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut);
     let enableAutoInputPaymentInfo = GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo);
@@ -110,12 +111,14 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
 
     // Create containers for user option
     const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', isDarkMode, '首頁自動展開更多影片', autoExpandMenu);
+    const showVideoPosterContainer = createOption('showVideoPosterCheckbox', isDarkMode, '影片頁面顯示封面圖', showVideoPoster);
     const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
     const enableSkipVideoContainer = createOption('enableSkipVideoCheckbox', isDarkMode, '啟用跳過秒數 (Ctrl + F2)', enableSkipVideo, true, skipDuration + ' 秒', 'skipDuration', '輸入跳過秒數');
     const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', isDarkMode, '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
     const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '付費自動勾選同意 & 填入發票資訊', enableAutoInputPaymentInfo, true, phoneBarcode, 'phoneBarcode', '輸入載具條碼');
 
     optionContainer.appendChild(autoExpandMenuContainer.container);
+    optionContainer.appendChild(showVideoPosterContainer.container);
     optionContainer.appendChild(centeredDanmukuBoxContainer.container);
     optionContainer.appendChild(enableSkipVideoContainer.container);
     optionContainer.appendChild(speedControlShortcutContainer.container);
@@ -139,6 +142,9 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
     applyBtn.onclick = () => {
         autoExpandMenu = autoExpandMenuContainer.checkBox.checked;
         GM_setValue('autoExpandMenu', autoExpandMenu);
+
+        showVideoPoster = showVideoPosterContainer.checkBox.checked;
+        GM_setValue('showVideoPoster', showVideoPoster);
 
         enableCenteredDanmukuBox = centeredDanmukuBoxContainer.checkBox.checked;
         GM_setValue('enableCenteredDanmukuBox', enableCenteredDanmukuBox);

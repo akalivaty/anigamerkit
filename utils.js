@@ -36,6 +36,10 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
         // If video page
         console.log("here is video page, " + current_url);
 
+        if (GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster)) {
+            showVideoPoster();
+        }
+
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
             document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
             document.addEventListener('keydown', toggleDanmukuBox);
@@ -71,6 +75,25 @@ function triggerShowMoreButton() {
         showMoreBtn.click();
     } else {
         console.error('Button with class "btn-show-more" not found.');
+    }
+}
+
+function showVideoPoster() {
+    // Hide R18 divs
+    const r18DivObserver = new MutationObserver(() => {
+        document.querySelectorAll('.R18').forEach(el => el.style.display = 'none');
+    });
+    r18DivObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Auto agree to adult check
+    const video = document.querySelector('video');
+    if (video) {
+        video.addEventListener('click', function (event) {
+            if (event.button === 0) {
+                const agreeBtn = document.getElementById('adult');
+                if (agreeBtn) agreeBtn.click();
+            }
+        });
     }
 }
 
