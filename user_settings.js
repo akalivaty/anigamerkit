@@ -47,23 +47,33 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
     }
 }
 
+/**
+ * Create a settings panel with user options.
+ * @param {Object} DEFAULT_SETTINGS - An object containing default settings for the script
+ * @param {boolean} isDarkMode - A boolean indicating if the dark theme is enabled
+ **/
 function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
-    console.log('isDarkMode:', isDarkMode);
-
     let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
     let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
     let enableSpeedControlShortcut = GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut);
     let enableAutoInputPaymentInfo = GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo);
+    let enableSkipVideo = GM_getValue('enableSkipVideo', DEFAULT_SETTINGS.enableSkipVideo);
+    let skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
     let phoneBarcode = GM_getValue('phoneBarcode', DEFAULT_SETTINGS.phoneBarcode);
 
     const settingPanel = document.createElement('div');
     settingPanel.id = 'setting-panel';
+    settingPanel.style.display = 'flex';
+    settingPanel.style.flexDirection = 'column';
     settingPanel.style.position = 'fixed';
     settingPanel.style.right = '20px';
     settingPanel.style.bottom = '60px';
-    settingPanel.style.width = '30%';
-    settingPanel.style.height = '30%';
-    settingPanel.style.padding = '20px';
+    settingPanel.style.width = '520px';
+    settingPanel.style.minWidth = '520px';
+    settingPanel.style.height = 'auto';
+    settingPanel.style.maxHeight = '50vh';
+    settingPanel.style.minHeight = '280px';
+    settingPanel.style.padding = '10px 15px';
     settingPanel.style.marginBottom = '20px';
     settingPanel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
     settingPanel.style.border = '1px solid #ccc';
@@ -94,15 +104,20 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
 
     // Create option container to hold all options
     const optionContainer = createOptionContainer();
+    optionContainer.style.flex = '1 1 auto';
+    optionContainer.style.overflowY = 'auto';
+    optionContainer.style.minHeight = '0';
 
     // Create containers for user option
     const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', isDarkMode, '首頁自動展開更多影片', autoExpandMenu);
     const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
+    const enableSkipVideoContainer = createOption('enableSkipVideoCheckbox', isDarkMode, '啟用跳過秒數 (Ctrl + F2)', enableSkipVideo, true, skipDuration + ' 秒', 'skipDuration', '輸入跳過秒數');
     const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', isDarkMode, '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
-    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '自動填入發票資訊, 載具:', enableAutoInputPaymentInfo, true, phoneBarcode);
+    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '付費自動勾選同意 & 填入發票資訊', enableAutoInputPaymentInfo, true, phoneBarcode, 'phoneBarcode', '輸入載具條碼');
 
     optionContainer.appendChild(autoExpandMenuContainer.container);
     optionContainer.appendChild(centeredDanmukuBoxContainer.container);
+    optionContainer.appendChild(enableSkipVideoContainer.container);
     optionContainer.appendChild(speedControlShortcutContainer.container);
     optionContainer.appendChild(autoInputPaymentInfoContainer.container);
 
@@ -111,10 +126,9 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
     // Apply button
     const applyBtn = document.createElement('button');
     applyBtn.textContent = 'Apply';
-    applyBtn.style.position = 'absolute';
-    applyBtn.style.left = '50%';
-    applyBtn.style.bottom = '10px';
-    applyBtn.style.transform = 'translateX(-50%)';
+    applyBtn.style.flexShrink = '0';
+    applyBtn.style.alignSelf = 'center';
+    applyBtn.style.margin = '5px';
     applyBtn.style.padding = '10px 20px';
     applyBtn.style.backgroundColor = 'rgba(64, 195, 221, 0.9)';
     applyBtn.style.color = 'white';
@@ -129,15 +143,20 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
         enableCenteredDanmukuBox = centeredDanmukuBoxContainer.checkBox.checked;
         GM_setValue('enableCenteredDanmukuBox', enableCenteredDanmukuBox);
 
+        enableSkipVideo = enableSkipVideoContainer.checkBox.checked;
+        GM_setValue('enableSkipVideo', enableSkipVideo);
+
+        skipDuration = document.querySelector('#skipDuration').value;
+        GM_setValue('skipDuration', skipDuration);
+
         enableSpeedControlShortcut = speedControlShortcutContainer.checkBox.checked;
         GM_setValue('enableSpeedControlShortcut', enableSpeedControlShortcut);
 
         enableAutoInputPaymentInfo = autoInputPaymentInfoContainer.checkBox.checked;
         GM_setValue('enableAutoInputPaymentInfo', enableAutoInputPaymentInfo);
 
-        phoneBarcode = document.querySelector('#barcode').value;
-        console.log('barcode:', phoneBarcode);
-        GM_setValue('barcode', phoneBarcode);
+        phoneBarcode = document.querySelector('#phoneBarcode').value;
+        GM_setValue('phoneBarcode', phoneBarcode);
 
 
         showFloatingMessage('已套用設定');
@@ -156,7 +175,19 @@ function createOptionContainer() {
     return optionContainer;
 }
 
-function createOption(elementID, isDarkMode, labelText, isChecked, needInputBox = false, inputBoxValue = null) {
+/**
+ * Create a checkbox option with a label and an optional input box.
+ * @param {string} elementID - The ID for the checkbox input
+ * @param {boolean} isDarkMode - A boolean indicating if the dark theme is enabled
+ * @param {string} labelText - The text for the label
+ * @param {boolean} isChecked - Whether the checkbox should be checked by default
+ * @param {boolean} [needInputBox=false] - Whether to include an input box
+ * @param {string|null} [inputBoxValue=null] - The value for the input box, if needed
+ * @param {string|null} [inputBoxID=null] - The ID for the input box, if needed
+ * @param {string|null} [inputBoxPlaceholder=null] - The placeholder text for the input box, if needed
+ * @return {Object} An object containing the container and checkbox elements
+ **/
+function createOption(elementID, isDarkMode, labelText, isChecked, needInputBox = false, inputBoxValue = null, inputBoxID = null, inputBoxPlaceholder = null) {
     const container = document.createElement('div');
     container.style.display = 'flex';
     container.style.alignItems = 'center';
@@ -184,22 +215,29 @@ function createOption(elementID, isDarkMode, labelText, isChecked, needInputBox 
 
     if (needInputBox) {
         const inputBox = document.createElement('input');
-        inputBox.id = 'barcode';
+        inputBox.id = inputBoxID;
         inputBox.type = 'text';
-        inputBox.style.marginLeft = '3px';
+        inputBox.style.position = 'relative';
+        inputBox.style.marginLeft = '8px';
+        inputBox.style.bottom = '1px';
         inputBox.style.width = '100px';
         inputBox.style.height = '25px';
         inputBox.style.border = '1px solid #ccc';
         inputBox.style.borderRadius = '5px';
         inputBox.style.padding = '5px';
-        inputBox.style.fontSize = '16px';
+        inputBox.style.fontSize = '14px';
         inputBox.style.outline = 'none';
         inputBox.autocomplete = 'off';
+
+        // Convert input to uppercase real-time
+        inputBox.oninput = function () {
+            this.value = this.value.toUpperCase();
+        };
 
         if (inputBoxValue) {
             inputBox.placeholder = inputBoxValue;
         } else {
-            inputBox.placeholder = '未輸入';
+            inputBox.placeholder = inputBoxPlaceholder;
         }
 
         container.appendChild(inputBox);

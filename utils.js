@@ -45,7 +45,11 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
             document.addEventListener('keydown', modifySpeed);
         }
 
-        document.addEventListener('keydown', skip89s);
+        if (GM_getValue('enableSkip', DEFAULT_SETTINGS.enableSkipVideo)) {
+            const skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
+            document.addEventListener('keydown', (event) => skipVideo(event, skipDuration));
+
+        }
 
     } else if (URL_PATTERNS.PAYMENT_PAGE.test(current_url)) {
         // If payment page
@@ -93,12 +97,12 @@ function modifySpeed(event) {
     }
 }
 
-function skip89s(event) {
+function skipVideo(event, duration) {
     const video = document.querySelector('video');
 
     if (video.duration > 10) {
         if (event.ctrlKey && event.key === 'F2') {
-            video.currentTime += 89;
+            video.currentTime += duration;
         }
     }
     else {

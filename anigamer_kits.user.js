@@ -22,6 +22,8 @@ window.onload = function () {
         enableCenteredDanmukuBox: true,
         enableSpeedControlShortcut: true,
         enableAutoInputPaymentInfo: true,
+        enableSkipVideo: true,
+        skipDuration: 89,
         phoneBarcode: "",
     };
 
