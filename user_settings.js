@@ -147,6 +147,9 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
         GM_setValue('enableSkipVideo', enableSkipVideo);
 
         skipDuration = document.querySelector('#skipDuration').value;
+        if (skipDuration === "" || isNaN(skipDuration) || skipDuration < 0) {
+            skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
+        }
         GM_setValue('skipDuration', skipDuration);
 
         enableSpeedControlShortcut = speedControlShortcutContainer.checkBox.checked;
@@ -156,6 +159,9 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
         GM_setValue('enableAutoInputPaymentInfo', enableAutoInputPaymentInfo);
 
         phoneBarcode = document.querySelector('#phoneBarcode').value;
+        if (phoneBarcode === "") {
+            phoneBarcode = GM_getValue('phoneBarcode', DEFAULT_SETTINGS.phoneBarcode);
+        }
         GM_setValue('phoneBarcode', phoneBarcode);
 
 

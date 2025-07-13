@@ -102,7 +102,7 @@ function skipVideo(event, duration) {
 
     if (video.duration > 10) {
         if (event.ctrlKey && event.key === 'F2') {
-            video.currentTime += duration;
+            video.currentTime += parseInt(duration, 10);
         }
     }
     else {
