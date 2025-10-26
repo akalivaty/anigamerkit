@@ -112,8 +112,8 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
     // Create containers for user option
     const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', isDarkMode, '首頁自動展開更多影片', autoExpandMenu);
     const showVideoPosterContainer = createOption('showVideoPosterCheckbox', isDarkMode, '影片頁面顯示封面圖', showVideoPoster);
-    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (F1)', enableCenteredDanmukuBox);
-    const enableSkipVideoContainer = createOption('enableSkipVideoCheckbox', isDarkMode, '啟用跳過秒數 (Ctrl + F2)', enableSkipVideo, true, skipDuration + ' 秒', 'skipDuration', '輸入跳過秒數');
+    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (Tab)', enableCenteredDanmukuBox);
+    const enableSkipVideoContainer = createOption('enableSkipVideoCheckbox', isDarkMode, '啟用跳過秒數 (數字 1 鍵)', enableSkipVideo, true, skipDuration + ' 秒', 'skipDuration', '輸入跳過秒數');
     const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', isDarkMode, '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
     const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '付費自動勾選同意 & 填入發票資訊', enableAutoInputPaymentInfo, true, phoneBarcode, 'phoneBarcode', '輸入載具條碼');
 

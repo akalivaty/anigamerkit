@@ -42,17 +42,17 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
             document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
-            document.addEventListener('keydown', toggleDanmukuBox);
+            document.addEventListener('keydown', toggleDanmukuBox, true);
         }
 
         if (GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut)) {
             document.addEventListener('keydown', modifySpeed);
         }
 
-        if (GM_getValue('enableSkip', DEFAULT_SETTINGS.enableSkipVideo)) {
+        if (GM_getValue('enableSkipVideo', DEFAULT_SETTINGS.enableSkipVideo)) {
             const skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
-            document.addEventListener('keydown', (event) => skipVideo(event, skipDuration));
-
+            const skipHandler = (event) => skipVideo(event, skipDuration);
+            document.addEventListener('keydown', skipHandler, true);
         }
 
     } else if (URL_PATTERNS.PAYMENT_PAGE.test(current_url)) {
@@ -121,16 +121,24 @@ function modifySpeed(event) {
 }
 
 function skipVideo(event, duration) {
-    const video = document.querySelector('video');
-
-    if (video.duration > 10) {
-        if (event.ctrlKey && event.key === 'F2') {
-            video.currentTime += parseInt(duration, 10);
-        }
-    }
-    else {
+    if (event.key !== '1') {
         return;
     }
+
+    const target = event.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+    }
+
+    const video = document.querySelector('video');
+    if (!video || video.duration <= 10) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    video.currentTime += parseInt(duration, 10);
 }
 
 function autoInputPaymentInfo(phoneBarcode = null) {
