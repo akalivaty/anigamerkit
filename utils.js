@@ -161,7 +161,7 @@ function autoInputPaymentInfo(phoneBarcode = null) {
     // auto check all checkboxes
     const checkBoxList = document.querySelectorAll('input.checkBtns');
     checkBoxList.forEach(checkbox => {
-        checkbox.click();
+        checkbox.checked = true
     });
 }
 

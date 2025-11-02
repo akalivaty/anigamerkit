@@ -13,9 +13,15 @@ function toggleDanmukuBox(event) {
         return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
+    // Only prevent default Tab behavior when not in IME composition
+    if (!isComposing) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    } else {
+        // If in IME composition, let the Tab event pass through
+        return;
+    }
 
     danmukuBox = document.querySelector('#custom-input-box');
     if (!danmukuBox) {
@@ -54,6 +60,11 @@ function toggleDanmukuBox(event) {
 
 function closeDanmukuBox() {
     if (!danmukuBox || danmukuBox.style.display !== 'block') {
+        return;
+    }
+
+    // Don't close the box if IME composition is active
+    if (isComposing) {
         return;
     }
 
