@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const entryFile = 'anigamer_kits.user.js';
-const sourceFiles = ['danmuku.js', 'user_settings.js', 'utils.js'];
+const sourceFiles = ['danmuku.js', 'floating_video.js', 'user_settings.js', 'utils.js'];
 const outputFile = path.join(projectRoot, 'dist', entryFile);
 
 const readSource = (file) => readFile(path.join(projectRoot, file), 'utf8');

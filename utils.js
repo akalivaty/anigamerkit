@@ -19,7 +19,7 @@ function injectStyles() {
             border: 1px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
+            z-index: 2147483647;
             font-size: 14px;
             opacity: 0;
             transition: opacity 0.2s;
@@ -91,6 +91,101 @@ function injectStyles() {
         .anigamerkit-settings-dark-text {
             color: black;
         }
+
+        .anigamerkit-floating-video {
+            position: fixed !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: 420px;
+            height: 236.25px;
+            min-width: min(240px, calc(100vw - 32px)) !important;
+            min-height: min(135px, calc(100vh - 88px)) !important;
+            max-width: calc(100vw - 32px) !important;
+            max-height: calc(100vh - 88px) !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            overflow: hidden;
+            background: #000;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            cursor: grab;
+            z-index: 2147483646 !important;
+        }
+
+        .anigamerkit-floating-resize-handle {
+            position: absolute;
+            box-sizing: border-box;
+            z-index: 2147483647;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .anigamerkit-floating-video.is-dragging {
+            cursor: grabbing;
+        }
+
+        .anigamerkit-floating-video .vjs-control-bar {
+            cursor: default;
+        }
+
+        .anigamerkit-floating-video .vjs-control {
+            cursor: pointer;
+        }
+
+        .anigamerkit-floating-resize-handle {
+            width: 20px;
+            height: 20px;
+            border: 0;
+            background: transparent;
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .anigamerkit-floating-video:hover .anigamerkit-floating-resize-handle {
+            opacity: 0.72;
+        }
+
+        .anigamerkit-floating-resize-handle:hover,
+        .anigamerkit-floating-resize-handle:active {
+            opacity: 1;
+        }
+
+        .anigamerkit-floating-resize-handle.is-nw {
+            top: 0;
+            left: 0;
+            border-top: 3px solid white;
+            border-left: 3px solid white;
+            cursor: nwse-resize;
+        }
+
+        .anigamerkit-floating-resize-handle.is-ne {
+            top: 0;
+            right: 0;
+            border-top: 3px solid white;
+            border-right: 3px solid white;
+            cursor: nesw-resize;
+        }
+
+        .anigamerkit-floating-resize-handle.is-sw {
+            bottom: 0;
+            left: 0;
+            border-bottom: 3px solid white;
+            border-left: 3px solid white;
+            cursor: nesw-resize;
+        }
+
+        .anigamerkit-floating-resize-handle.is-se {
+            right: 0;
+            bottom: 0;
+            border-right: 3px solid white;
+            border-bottom: 3px solid white;
+            cursor: nwse-resize;
+        }
+
+        #custom-input-box {
+            z-index: 2147483647 !important;
+        }
     `;
     const style = document.createElement('style');
     style.textContent = css;
@@ -120,6 +215,10 @@ function filterPage(DEFAULT_SETTINGS) {
 
         if (GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster)) {
             showVideoPoster();
+        }
+
+        if (GM_getValue('enableFloatingVideo', DEFAULT_SETTINGS.enableFloatingVideo)) {
+            initializeFloatingVideo();
         }
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {

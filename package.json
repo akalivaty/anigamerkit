@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-userscript.mjs",
-    "check": "npm run build && node --check anigamer_kits.user.js && node --check danmuku.js && node --check user_settings.js && node --check utils.js && node --check dist/anigamer_kits.user.js && node --test",
+    "check": "npm run build && node --check anigamer_kits.user.js && node --check danmuku.js && node --check floating_video.js && node --check user_settings.js && node --check utils.js && node --check dist/anigamer_kits.user.js && node --test",
     "version": "node scripts/sync-version.mjs && npm run check && git add anigamer_kits.user.js",
     "release:patch": "npm version patch --git-tag-version=true --tag-version-prefix=v --message=\"chore(release): v%s\"",
     "release:minor": "npm version minor --git-tag-version=true --tag-version-prefix=v --message=\"chore(release): v%s\"",

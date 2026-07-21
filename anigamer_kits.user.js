@@ -16,6 +16,7 @@ window.addEventListener('load', () => {
     const DEFAULT_SETTINGS = {
         autoExpandMenu: true,
         showVideoPoster: true,
+        enableFloatingVideo: true,
         enableCenteredDanmukuBox: true,
         enableSpeedControlShortcut: true,
         enableAutoInputPaymentInfo: true,

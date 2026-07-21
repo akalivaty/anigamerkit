@@ -12,6 +12,11 @@ const SETTINGS_SCHEMA = [
         label: '影片頁面顯示封面圖'
     },
     {
+        key: 'enableFloatingVideo',
+        checkboxId: 'floatingVideoCheckbox',
+        label: '影片捲出畫面時顯示右下角浮動播放器'
+    },
+    {
         key: 'enableCenteredDanmukuBox',
         checkboxId: 'centeredDanmukuBoxCheckbox',
         label: '啟用浮動彈幕輸入框 (Tab)'
@@ -63,7 +68,7 @@ function createFloatingButton(DEFAULT_SETTINGS) {
     settingBtn.style.border = 'none';
     settingBtn.style.borderRadius = '50%';
     settingBtn.style.cursor = 'pointer';
-    settingBtn.style.zIndex = '1001';
+    settingBtn.style.zIndex = '2147483647';
     settingBtn.style.fontSize = '24px';
     settingBtn.style.display = 'flex';
     settingBtn.style.alignItems = 'center';

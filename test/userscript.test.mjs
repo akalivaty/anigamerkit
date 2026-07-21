@@ -105,6 +105,105 @@ test('payment checkboxes emit a bubbling change event', async () => {
   assert.equal(events[0].bubbles, true);
 });
 
+test('floating video visibility uses height instead of area', async () => {
+  const { getVisibleHeightRatio } = await loadFunctions(
+    'floating_video.js',
+    ['getVisibleHeightRatio']
+  );
+
+  assert.equal(getVisibleHeightRatio({
+    intersectionRect: { height: 40 },
+    boundingClientRect: { height: 100 }
+  }), 0.4);
+  assert.equal(getVisibleHeightRatio({
+    intersectionRect: { height: 120 },
+    boundingClientRect: { height: 100 }
+  }), 1);
+  assert.equal(getVisibleHeightRatio({
+    intersectionRect: { height: 0 },
+    boundingClientRect: { height: 0 }
+  }), 0);
+});
+
+test('floating video uses 50/60 percent hysteresis', async () => {
+  const { shouldFloatVideo } = await loadFunctions(
+    'floating_video.js',
+    ['shouldFloatVideo']
+  );
+
+  assert.equal(shouldFloatVideo(false, 0.49, true, false), true);
+  assert.equal(shouldFloatVideo(false, 0.5, true, false), false);
+  assert.equal(shouldFloatVideo(true, 0.59, true, false), true);
+  assert.equal(shouldFloatVideo(true, 0.6, true, false), false);
+  assert.equal(shouldFloatVideo(false, 0.2, false, false), false);
+  assert.equal(shouldFloatVideo(true, 0.2, false, false), true);
+  assert.equal(shouldFloatVideo(true, 0.2, true, true), false);
+});
+
+test('floating video dragging stays inside the viewport', async () => {
+  const { getDraggedFloatingRect } = await loadFunctions(
+    'floating_video.js',
+    ['getDraggedFloatingRect']
+  );
+  const startRect = { left: 100, top: 80, width: 400, height: 225 };
+
+  assert.deepEqual(
+    { ...getDraggedFloatingRect(startRect, 1000, 1000, 1000, 700) },
+    { left: 600, top: 475, width: 400, height: 225 }
+  );
+  assert.deepEqual(
+    { ...getDraggedFloatingRect(startRect, -1000, -1000, 1000, 700) },
+    { left: 0, top: 0, width: 400, height: 225 }
+  );
+});
+
+test('floating video reuses remembered size only within the page lifecycle', async () => {
+  const { getInitialFloatingSize } = await loadFunctions(
+    'floating_video.js',
+    ['getInitialFloatingSize']
+  );
+
+  assert.deepEqual(
+    { ...getInitialFloatingSize(null, 16 / 9, 1000, 800) },
+    { width: 420, height: 236.25 }
+  );
+  assert.deepEqual(
+    { ...getInitialFloatingSize({ width: 560, height: 315 }, 16 / 9, 1000, 800) },
+    { width: 560, height: 315 }
+  );
+  assert.deepEqual(
+    { ...getInitialFloatingSize({ width: 560, height: 315 }, 16 / 9, 300, 200) },
+    { width: 268, height: 112 }
+  );
+});
+
+test('floating video can resize from all four corners', async () => {
+  const { getResizedFloatingRect } = await loadFunctions(
+    'floating_video.js',
+    ['getResizedFloatingRect']
+  );
+  const startRect = { left: 100, top: 100, width: 400, height: 225 };
+  const resize = (deltaX, deltaY, direction) => ({
+    ...getResizedFloatingRect(startRect, deltaX, deltaY, direction, 1000, 700)
+  });
+
+  assert.deepEqual(resize(50, 25, 'se'), { left: 100, top: 100, width: 450, height: 250 });
+  assert.deepEqual(resize(-50, 25, 'sw'), { left: 50, top: 100, width: 450, height: 250 });
+  assert.deepEqual(resize(50, -25, 'ne'), { left: 100, top: 75, width: 450, height: 250 });
+  assert.deepEqual(resize(-50, -25, 'nw'), { left: 50, top: 75, width: 450, height: 250 });
+});
+
+test('floating video excludes existing controls from dragging', async () => {
+  const { isFloatingVideoInteractiveTarget } = await loadFunctions(
+    'floating_video.js',
+    ['isFloatingVideoInteractiveTarget']
+  );
+
+  assert.equal(isFloatingVideoInteractiveTarget({ closest: () => ({}) }), true);
+  assert.equal(isFloatingVideoInteractiveTarget({ closest: () => null }), false);
+  assert.equal(isFloatingVideoInteractiveTarget(null), false);
+});
+
 test('settings schema includes every persisted option', async () => {
   const { SETTINGS_SCHEMA } = await loadFunctions('user_settings.js', ['SETTINGS_SCHEMA']);
 
@@ -113,6 +212,7 @@ test('settings schema includes every persisted option', async () => {
     [
       'autoExpandMenu',
       'showVideoPoster',
+      'enableFloatingVideo',
       'enableCenteredDanmukuBox',
       'enableSkipVideo',
       'enableSpeedControlShortcut',
@@ -135,4 +235,10 @@ test('source and bundled metadata contain no @require directives', async () => {
 
   assert.doesNotMatch(source, /^\/\/\s+@require\s+/m);
   assert.doesNotMatch(bundled, /^\/\/\s+@require\s+/m);
+});
+
+test('bundled userscript includes the floating video module', async () => {
+  const bundled = await readFile(path.join(projectRoot, 'dist', 'anigamer_kits.user.js'), 'utf8');
+
+  assert.match(bundled, /function initializeFloatingVideo\(\)/);
 });
