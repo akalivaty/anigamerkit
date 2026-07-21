@@ -2,13 +2,95 @@
 
 function injectStyles() {
     const css = `
-        .fade-in {
-            opacity: 1 !important;
+        .anigamerkit-settings-panel {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            right: 20px;
+            bottom: 60px;
+            width: 520px;
+            max-width: calc(100vw - 40px);
+            max-height: 50vh;
+            min-height: 280px;
+            box-sizing: border-box;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .fade-out {
-            opacity: 0 !important;
+
+        .anigamerkit-settings-panel.is-visible {
+            opacity: 1;
         }
-            
+
+        .anigamerkit-settings-title {
+            font-weight: bold;
+            text-align: center;
+            font-size: 20px;
+            user-select: none;
+        }
+
+        .anigamerkit-settings-options {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            margin-top: 10px;
+            overflow-y: auto;
+        }
+
+        .anigamerkit-settings-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .anigamerkit-settings-checkbox {
+            width: 20px;
+            height: 20px;
+        }
+
+        .anigamerkit-settings-label {
+            margin-left: 5px;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        .anigamerkit-settings-input {
+            position: relative;
+            bottom: 1px;
+            width: 100px;
+            height: 25px;
+            box-sizing: border-box;
+            margin-left: 8px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .anigamerkit-settings-apply {
+            flex-shrink: 0;
+            align-self: center;
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: rgba(64, 195, 221, 0.9);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .anigamerkit-settings-dark-text {
+            color: black;
+        }
     `;
     const style = document.createElement('style');
     style.textContent = css;
@@ -17,24 +99,24 @@ function injectStyles() {
 
 /**
  * Filter the page based on URL patterns and apply settings.
- * @param {Object} URL_PATTERNS - An object containing regex patterns for different pages
  * @param {Object} DEFAULT_SETTINGS - An object containing user's settings for the script
  * @returns {void}
  **/
-function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
+function filterPage(DEFAULT_SETTINGS) {
 
-    const current_url = window.location.href;
+    const currentUrl = new URL(window.location.href);
+    const pageType = getPageType(currentUrl);
 
-    if (URL_PATTERNS.HOME_PAGE.test(current_url)) {
+    if (pageType === 'home') {
         // If homepage
         console.log("here is homepage");
 
         if (GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu)) {
             triggerShowMoreButton();
         }
-    } else if (URL_PATTERNS.VIDEO_PAGE.test(current_url) || URL_PATTERNS.PARTY_PAGE.test(current_url)) {
+    } else if (pageType === 'video') {
         // If video page
-        console.log("here is video page, " + current_url);
+        console.log("here is video page, " + currentUrl.href);
 
         if (GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster)) {
             showVideoPoster();
@@ -55,9 +137,9 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
             document.addEventListener('keydown', skipHandler, true);
         }
 
-    } else if (URL_PATTERNS.PAYMENT_PAGE.test(current_url)) {
+    } else if (pageType === 'payment') {
         // If payment page
-        console.log("here is video page, " + current_url);
+        console.log("here is payment page, " + currentUrl.href);
 
         if (GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo)) {
             const phoneBarcode = GM_getValue('phoneBarcode', null);
@@ -65,8 +147,26 @@ function filterPage(URL_PATTERNS, DEFAULT_SETTINGS) {
         }
 
     } else {
-        console.log(`failed at ${current_url}`);
+        console.log(`failed at ${currentUrl.href}`);
     }
+}
+
+function getPageType(url) {
+    const hasNumericParam = (name) => /^\d+$/.test(url.searchParams.get(name) || '');
+
+    if (url.pathname === '/') {
+        return 'home';
+    }
+    if (url.pathname === '/animeVideo.php' && hasNumericParam('sn')) {
+        return 'video';
+    }
+    if (url.pathname.startsWith('/party')) {
+        return 'video';
+    }
+    if (url.pathname === '/animePay2.php' && hasNumericParam('itemSn')) {
+        return 'payment';
+    }
+    return 'unknown';
 }
 
 function triggerShowMoreButton() {
@@ -98,7 +198,14 @@ function showVideoPoster() {
 }
 
 function modifySpeed(event) {
+    if (!event.shiftKey || (event.key !== '>' && event.key !== '<')) {
+        return;
+    }
+
     const video = document.querySelector('video');
+    if (!video) {
+        return;
+    }
 
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
     let currentSpeedIndex = speeds.indexOf(video.playbackRate);
@@ -146,11 +253,13 @@ function autoInputPaymentInfo(phoneBarcode = null) {
     const invoiceChoice = document.querySelector('.payment-form-invoice');
     if (invoiceChoice) {
         const noDonateInvoice = document.querySelector('#e2');
-        noDonateInvoice.click();
+        if (noDonateInvoice) {
+            noDonateInvoice.click();
+        }
         const invoiceTypeSelect = document.querySelector('select.anime-select--invoice');
         if (invoiceTypeSelect) {
             invoiceTypeSelect.value = '3';
-            invoiceTypeSelect.dispatchEvent(new Event('change'));
+            invoiceTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             const phoneBarcodeInput = document.querySelector('input[name="cell-cardno"]');
             if (phoneBarcodeInput && phoneBarcode) {
                 phoneBarcodeInput.value = phoneBarcode;
@@ -161,7 +270,10 @@ function autoInputPaymentInfo(phoneBarcode = null) {
     // auto check all checkboxes
     const checkBoxList = document.querySelectorAll('input.checkBtns');
     checkBoxList.forEach(checkbox => {
-        checkbox.checked = true
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     });
 }
 

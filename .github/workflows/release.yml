@@ -1,0 +1,45 @@
+name: Release userscript
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Verify tag matches package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          node -e "const expected = 'v' + require('./package.json').version;
+          if (process.env.RELEASE_TAG !== expected) {
+          throw new Error('Tag ' + process.env.RELEASE_TAG + ' does not match ' + expected);
+          }"
+
+      - name: Test and build userscript
+        run: npm run check
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          gh release create "$RELEASE_TAG"
+          "dist/anigamer_kits.user.js#AniGamerKit userscript"
+          --verify-tag
+          --generate-notes
+          --title "$RELEASE_TAG"

@@ -1,5 +1,52 @@
 'use strict';
 
+const SETTINGS_SCHEMA = [
+    {
+        key: 'autoExpandMenu',
+        checkboxId: 'autoExpandMenuCheckbox',
+        label: '首頁自動展開更多影片'
+    },
+    {
+        key: 'showVideoPoster',
+        checkboxId: 'showVideoPosterCheckbox',
+        label: '影片頁面顯示封面圖'
+    },
+    {
+        key: 'enableCenteredDanmukuBox',
+        checkboxId: 'centeredDanmukuBoxCheckbox',
+        label: '啟用浮動彈幕輸入框 (Tab)'
+    },
+    {
+        key: 'enableSkipVideo',
+        checkboxId: 'enableSkipVideoCheckbox',
+        label: '啟用跳過秒數 (數字 1 鍵)',
+        input: {
+            key: 'skipDuration',
+            id: 'skipDuration',
+            type: 'number',
+            min: 0,
+            placeholder: '輸入跳過秒數'
+        }
+    },
+    {
+        key: 'enableSpeedControlShortcut',
+        checkboxId: 'speedControlShortcutCheckbox',
+        label: '啟用速度調整快捷鍵 (Shift + >/<)'
+    },
+    {
+        key: 'enableAutoInputPaymentInfo',
+        checkboxId: 'autoInputPaymentInfoCheckbox',
+        label: '付費自動勾選同意 & 填入發票資訊',
+        input: {
+            key: 'phoneBarcode',
+            id: 'phoneBarcode',
+            type: 'text',
+            uppercase: true,
+            placeholder: '輸入載具條碼'
+        }
+    }
+];
+
 function createFloatingButton(DEFAULT_SETTINGS) {
     const settingBtn = document.createElement('button');
     settingBtn.id = 'settingBtn';
@@ -30,13 +77,14 @@ function createFloatingButton(DEFAULT_SETTINGS) {
 
 function toggleSettingsPanel(DEFAULT_SETTINGS) {
     const settingBtn = document.querySelector('#settingBtn');
-    let settingPanel = document.getElementById('setting-panel');
+    const settingPanel = document.getElementById('setting-panel');
+    if (!settingBtn) {
+        return;
+    }
+
     if (settingPanel) {
         settingBtn.style.transform = 'rotate(-360deg)';
-
-        requestAnimationFrame(() => {
-            settingPanel.style.opacity = '0';
-        });
+        settingPanel.classList.remove('is-visible');
 
         setTimeout(() => {
             settingPanel.remove();
@@ -53,208 +101,133 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
  * @param {boolean} isDarkMode - A boolean indicating if the dark theme is enabled
  **/
 function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
-    let autoExpandMenu = GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu);
-    let showVideoPoster = GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster);
-    let enableCenteredDanmukuBox = GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox);
-    let enableSpeedControlShortcut = GM_getValue('enableSpeedControlShortcut', DEFAULT_SETTINGS.enableSpeedControlShortcut);
-    let enableAutoInputPaymentInfo = GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo);
-    let enableSkipVideo = GM_getValue('enableSkipVideo', DEFAULT_SETTINGS.enableSkipVideo);
-    let skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
-    let phoneBarcode = GM_getValue('phoneBarcode', DEFAULT_SETTINGS.phoneBarcode);
-
     const settingPanel = document.createElement('div');
     settingPanel.id = 'setting-panel';
-    settingPanel.style.display = 'flex';
-    settingPanel.style.flexDirection = 'column';
-    settingPanel.style.position = 'fixed';
-    settingPanel.style.right = '20px';
-    settingPanel.style.bottom = '60px';
-    settingPanel.style.width = '520px';
-    settingPanel.style.minWidth = '520px';
-    settingPanel.style.height = 'auto';
-    settingPanel.style.maxHeight = '50vh';
-    settingPanel.style.minHeight = '280px';
-    settingPanel.style.padding = '10px 15px';
-    settingPanel.style.marginBottom = '20px';
-    settingPanel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    settingPanel.style.border = '1px solid #ccc';
-    settingPanel.style.borderRadius = '8px';
-    settingPanel.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
-    settingPanel.style.zIndex = '1001';
-    settingPanel.style.fontSize = '14px';
-    settingPanel.style.opacity = '0';
-    settingPanel.style.transition = 'opacity 0.2s';
-
-    document.body.appendChild(settingPanel);
-
-    // Trigger the fade-in effect
-    requestAnimationFrame(() => {
-        settingPanel.style.opacity = '1';
-    });
+    settingPanel.className = 'anigamerkit-settings-panel';
 
     const title = document.createElement('h3');
+    title.className = 'anigamerkit-settings-title';
     if (isDarkMode) {
-        title.style.color = 'black';
+        title.classList.add('anigamerkit-settings-dark-text');
     }
     title.textContent = 'Settings';
-    title.style.fontWeight = 'bold';
-    title.style.textAlign = 'center';
-    title.style.fontSize = '20px';
-    title.style.userSelect = 'none';
     settingPanel.appendChild(title);
 
-    // Create option container to hold all options
     const optionContainer = createOptionContainer();
-    optionContainer.style.flex = '1 1 auto';
-    optionContainer.style.overflowY = 'auto';
-    optionContainer.style.minHeight = '0';
-
-    // Create containers for user option
-    const autoExpandMenuContainer = createOption('autoExpandMenuCheckbox', isDarkMode, '首頁自動展開更多影片', autoExpandMenu);
-    const showVideoPosterContainer = createOption('showVideoPosterCheckbox', isDarkMode, '影片頁面顯示封面圖', showVideoPoster);
-    const centeredDanmukuBoxContainer = createOption('centeredDanmukuBoxCheckbox', isDarkMode, '啟用浮動彈幕輸入框 (Tab)', enableCenteredDanmukuBox);
-    const enableSkipVideoContainer = createOption('enableSkipVideoCheckbox', isDarkMode, '啟用跳過秒數 (數字 1 鍵)', enableSkipVideo, true, skipDuration + ' 秒', 'skipDuration', '輸入跳過秒數');
-    const speedControlShortcutContainer = createOption('speedControlShortcutCheckbox', isDarkMode, '啟用速度調整快捷鍵 (Shift + >/<)', enableSpeedControlShortcut);
-    const autoInputPaymentInfoContainer = createOption('autoInputPaymentInfoCheckbox', isDarkMode, '付費自動勾選同意 & 填入發票資訊', enableAutoInputPaymentInfo, true, phoneBarcode, 'phoneBarcode', '輸入載具條碼');
-
-    optionContainer.appendChild(autoExpandMenuContainer.container);
-    optionContainer.appendChild(showVideoPosterContainer.container);
-    optionContainer.appendChild(centeredDanmukuBoxContainer.container);
-    optionContainer.appendChild(enableSkipVideoContainer.container);
-    optionContainer.appendChild(speedControlShortcutContainer.container);
-    optionContainer.appendChild(autoInputPaymentInfoContainer.container);
+    const optionControls = SETTINGS_SCHEMA.map((setting) => {
+        const viewModel = {
+            ...setting,
+            checked: GM_getValue(setting.key, DEFAULT_SETTINGS[setting.key]),
+            input: setting.input ? {
+                ...setting.input,
+                value: GM_getValue(setting.input.key, DEFAULT_SETTINGS[setting.input.key])
+            } : null
+        };
+        const control = createOption(viewModel, isDarkMode);
+        optionContainer.appendChild(control.container);
+        return control;
+    });
 
     settingPanel.appendChild(optionContainer);
 
-    // Apply button
     const applyBtn = document.createElement('button');
     applyBtn.textContent = 'Apply';
-    applyBtn.style.flexShrink = '0';
-    applyBtn.style.alignSelf = 'center';
-    applyBtn.style.margin = '5px';
-    applyBtn.style.padding = '10px 20px';
-    applyBtn.style.backgroundColor = 'rgba(64, 195, 221, 0.9)';
-    applyBtn.style.color = 'white';
-    applyBtn.style.border = 'none';
-    applyBtn.style.borderRadius = '5px';
-    applyBtn.style.cursor = 'pointer';
+    applyBtn.className = 'anigamerkit-settings-apply';
 
     applyBtn.onclick = () => {
-        autoExpandMenu = autoExpandMenuContainer.checkBox.checked;
-        GM_setValue('autoExpandMenu', autoExpandMenu);
-
-        showVideoPoster = showVideoPosterContainer.checkBox.checked;
-        GM_setValue('showVideoPoster', showVideoPoster);
-
-        enableCenteredDanmukuBox = centeredDanmukuBoxContainer.checkBox.checked;
-        GM_setValue('enableCenteredDanmukuBox', enableCenteredDanmukuBox);
-
-        enableSkipVideo = enableSkipVideoContainer.checkBox.checked;
-        GM_setValue('enableSkipVideo', enableSkipVideo);
-
-        skipDuration = document.querySelector('#skipDuration').value;
-        if (skipDuration === "" || isNaN(skipDuration) || skipDuration < 0) {
-            skipDuration = GM_getValue('skipDuration', DEFAULT_SETTINGS.skipDuration);
-        }
-        GM_setValue('skipDuration', skipDuration);
-
-        enableSpeedControlShortcut = speedControlShortcutContainer.checkBox.checked;
-        GM_setValue('enableSpeedControlShortcut', enableSpeedControlShortcut);
-
-        enableAutoInputPaymentInfo = autoInputPaymentInfoContainer.checkBox.checked;
-        GM_setValue('enableAutoInputPaymentInfo', enableAutoInputPaymentInfo);
-
-        phoneBarcode = document.querySelector('#phoneBarcode').value;
-        if (phoneBarcode === "") {
-            phoneBarcode = GM_getValue('phoneBarcode', DEFAULT_SETTINGS.phoneBarcode);
-        }
-        GM_setValue('phoneBarcode', phoneBarcode);
-
-
+        optionControls.forEach((control) => saveOption(control, DEFAULT_SETTINGS));
         showFloatingMessage('已套用設定');
     };
 
     settingPanel.appendChild(applyBtn);
-
     document.body.appendChild(settingPanel);
+
+    requestAnimationFrame(() => {
+        settingPanel.classList.add('is-visible');
+    });
 }
 
 function createOptionContainer() {
     const optionContainer = document.createElement('div');
-    optionContainer.style.display = 'flex';
-    optionContainer.style.flexDirection = 'column';
-    optionContainer.style.marginTop = '10px';
+    optionContainer.className = 'anigamerkit-settings-options';
     return optionContainer;
 }
 
 /**
  * Create a checkbox option with a label and an optional input box.
- * @param {string} elementID - The ID for the checkbox input
+ * @param {Object} setting - Settings schema entry with its stored values
  * @param {boolean} isDarkMode - A boolean indicating if the dark theme is enabled
- * @param {string} labelText - The text for the label
- * @param {boolean} isChecked - Whether the checkbox should be checked by default
- * @param {boolean} [needInputBox=false] - Whether to include an input box
- * @param {string|null} [inputBoxValue=null] - The value for the input box, if needed
- * @param {string|null} [inputBoxID=null] - The ID for the input box, if needed
- * @param {string|null} [inputBoxPlaceholder=null] - The placeholder text for the input box, if needed
- * @return {Object} An object containing the container and checkbox elements
+ * @return {Object} The rendered controls and their schema entry
  **/
-function createOption(elementID, isDarkMode, labelText, isChecked, needInputBox = false, inputBoxValue = null, inputBoxID = null, inputBoxPlaceholder = null) {
+function createOption(setting, isDarkMode) {
     const container = document.createElement('div');
-    container.style.display = 'flex';
-    container.style.alignItems = 'center';
-    container.style.marginBottom = '10px';
+    container.className = 'anigamerkit-settings-option';
 
     const checkBox = document.createElement('input');
-    checkBox.id = elementID;
+    checkBox.id = setting.checkboxId;
     checkBox.type = 'checkbox';
-    checkBox.checked = isChecked;
-    checkBox.style.width = '20px';
-    checkBox.style.height = '20px';
+    checkBox.checked = setting.checked;
+    checkBox.className = 'anigamerkit-settings-checkbox';
 
     const label = document.createElement('label');
+    label.className = 'anigamerkit-settings-label';
     if (isDarkMode) {
-        label.style.color = 'black';
+        label.classList.add('anigamerkit-settings-dark-text');
     }
-    label.textContent = labelText;
-    label.style.fontSize = '16px';
-    label.style.marginLeft = '5px';
-    label.htmlFor = elementID;
-    label.style.userSelect = 'none';
+    label.textContent = setting.label;
+    label.htmlFor = setting.checkboxId;
 
     container.appendChild(checkBox);
     container.appendChild(label);
 
-    if (needInputBox) {
-        const inputBox = document.createElement('input');
-        inputBox.id = inputBoxID;
-        inputBox.type = 'text';
-        inputBox.style.position = 'relative';
-        inputBox.style.marginLeft = '8px';
-        inputBox.style.bottom = '1px';
-        inputBox.style.width = '100px';
-        inputBox.style.height = '25px';
-        inputBox.style.border = '1px solid #ccc';
-        inputBox.style.borderRadius = '5px';
-        inputBox.style.padding = '5px';
-        inputBox.style.fontSize = '14px';
-        inputBox.style.outline = 'none';
+    let inputBox = null;
+    if (setting.input) {
+        inputBox = document.createElement('input');
+        inputBox.id = setting.input.id;
+        inputBox.type = setting.input.type;
+        inputBox.value = setting.input.value ?? '';
+        inputBox.placeholder = setting.input.placeholder;
+        inputBox.className = 'anigamerkit-settings-input';
         inputBox.autocomplete = 'off';
 
-        // Convert input to uppercase real-time
-        inputBox.oninput = function () {
-            this.value = this.value.toUpperCase();
-        };
-
-        if (inputBoxValue) {
-            inputBox.placeholder = inputBoxValue;
-        } else {
-            inputBox.placeholder = inputBoxPlaceholder;
+        if (setting.input.type === 'number') {
+            inputBox.min = setting.input.min;
+            inputBox.step = '1';
+        }
+        if (setting.input.uppercase) {
+            inputBox.addEventListener('input', () => {
+                inputBox.value = inputBox.value.toUpperCase();
+            });
         }
 
         container.appendChild(inputBox);
     }
 
+    return { setting, container, checkBox, inputBox };
+}
 
-    return { container, checkBox };
+function saveOption(control, DEFAULT_SETTINGS) {
+    const { setting, checkBox, inputBox } = control;
+    GM_setValue(setting.key, checkBox.checked);
+
+    if (!setting.input || !inputBox) {
+        return;
+    }
+
+    const inputSetting = setting.input;
+    const previousValue = GM_getValue(inputSetting.key, DEFAULT_SETTINGS[inputSetting.key]);
+    const rawValue = inputBox.value.trim();
+    let value = rawValue || previousValue;
+
+    if (inputSetting.type === 'number') {
+        const numericValue = Number(rawValue);
+        value = rawValue !== '' && Number.isInteger(numericValue) && numericValue >= inputSetting.min
+            ? numericValue
+            : previousValue;
+    } else if (inputSetting.uppercase && rawValue) {
+        value = rawValue.toUpperCase();
+    }
+
+    GM_setValue(inputSetting.key, value);
+    inputBox.value = value;
 }

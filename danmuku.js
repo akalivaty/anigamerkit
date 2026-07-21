@@ -118,11 +118,14 @@ function listenDanmuku(event) {
     if (event.key === 'Enter') {
         event.preventDefault();
         event.stopPropagation();
-        const danmukuBox = document.querySelector('#custom-input-box');
-        const danmuku = danmukuBox.value.trim();
-        if (danmuku) {
-            danmukuBox.value = '';
-            sendDanmuku(danmuku);
+        const inputBox = document.querySelector('#custom-input-box');
+        if (!inputBox) {
+            return;
+        }
+
+        const danmuku = inputBox.value.trim();
+        if (danmuku && sendDanmuku(danmuku)) {
+            inputBox.value = '';
         }
     }
 }
@@ -130,6 +133,11 @@ function listenDanmuku(event) {
 function sendDanmuku(danmuku, autoCloseInputBox = true) {
     const danmuInput = document.querySelector('#danmutxt');
     const sendButton = document.querySelector('.danmu-send_btn');
+    if (!danmuInput || !sendButton) {
+        console.error('Danmuku input or send button not found');
+        return false;
+    }
+
     danmuInput.value = danmuku;
     sendButton.click();
     console.log('Danmuku sent:', danmuku);
@@ -137,4 +145,6 @@ function sendDanmuku(danmuku, autoCloseInputBox = true) {
     if (autoCloseInputBox) {
         closeDanmukuBox();
     }
+
+    return true;
 }
