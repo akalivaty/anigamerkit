@@ -3,3 +3,4 @@
 .codegraph
 dist/
 todo.md
+.cache/

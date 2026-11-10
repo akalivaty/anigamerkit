@@ -66,6 +66,8 @@ npm run build
 
 建置完成後，將 `dist/anigamer_kits.user.js` 匯入 Tampermonkey。產出的 userscript 已包含所有來源模組，不使用本機 `@require` 路徑。
 
+`npm run build` 也會用本機的 Chrome（headless）依建置結果重新產生 `img/setting_panel.png`，所以設定面板有變動時，README 的截圖會自動更新。截圖使用預設設定與動畫瘋深色主題的樣式，只在 bundle 變動時重新產生，畫面沒變就不會改寫檔案。找不到 Chrome 時會略過（可用 `CHROME_PATH` 指定路徑），CI 中也會略過。
+
 本機開發時請修改專案根目錄的來源檔案，再重新執行 `npm run build`。請勿將根目錄的 `anigamer_kits.user.js` 直接匯入 Tampermonkey；該檔案是 bundle 入口，實際可安裝檔案位於 `dist/anigamer_kits.user.js`。
 
 ## Release
