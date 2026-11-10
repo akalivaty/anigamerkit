@@ -463,7 +463,7 @@ function injectStyles() {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            padding: 10px 0 0;
+            padding: 14px 0;
         }
 
         .anigamerkit-toolbar-toggle {
@@ -472,7 +472,7 @@ function injectStyles() {
             gap: 4px;
             padding: 5px 12px;
             border: 1px solid rgba(128, 128, 128, 0.45);
-            border-radius: 999px;
+            border-radius: 8px;
             background: transparent;
             color: inherit;
             font-size: 14px;
