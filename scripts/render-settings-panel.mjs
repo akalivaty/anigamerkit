@@ -80,8 +80,9 @@ const harnessHtml = `<!doctype html>
 <style>
   html, body { margin: 0; background: ${PAGE_BACKGROUND}; }
   ${SITE_BASE_CSS}
-  /* Show every option instead of the scrollable 50vh panel, and skip the fade-in */
-  .anigamerkit-settings-panel { max-height: none !important; transition: none !important; }
+  /* Show every option instead of the scrollable 50vh panel, and skip the fade-in.
+     Forcing opacity means the image never depends on the panel's requestAnimationFrame. */
+  .anigamerkit-settings-panel { max-height: none !important; transition: none !important; opacity: 1 !important; }
   #settingBtn { transition: none !important; }
 </style>
 <script>
@@ -94,17 +95,17 @@ const harnessHtml = `<!doctype html>
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       document.querySelector('#settingBtn').click();
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        const rect = document.querySelector('.anigamerkit-settings-panel').getBoundingClientRect();
-        const marker = document.createElement('meta');
-        marker.name = 'panel-size';
-        // Panel plus the space below it down to the viewport edge, where the + button sits
-        marker.content = [
-          Math.ceil(rect.width + ${PAGE_PADDING} * 2),
-          Math.ceil(rect.height + (innerHeight - rect.bottom) + ${PAGE_PADDING})
-        ].join('x');
-        document.head.appendChild(marker);
-      }));
+      // Measure right away: getBoundingClientRect forces layout, while requestAnimationFrame
+      // does not fire reliably in headless Chrome under --virtual-time-budget
+      const rect = document.querySelector('.anigamerkit-settings-panel').getBoundingClientRect();
+      const marker = document.createElement('meta');
+      marker.name = 'panel-size';
+      // Panel plus the space below it down to the viewport edge, where the + button sits
+      marker.content = [
+        Math.ceil(rect.width + ${PAGE_PADDING} * 2),
+        Math.ceil(rect.height + (innerHeight - rect.bottom) + ${PAGE_PADDING})
+      ].join('x');
+      document.head.appendChild(marker);
     });
   });
 </script>
