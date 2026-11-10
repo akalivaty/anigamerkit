@@ -1,5 +1,101 @@
 'use strict';
 
+const SPEED_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+/**
+ * Run the callback once the DOM is parsed (or immediately if it already is).
+ * @param {Function} callback
+ * @returns {void}
+ **/
+function onDomReady(callback) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback, { once: true });
+    } else {
+        callback();
+    }
+}
+
+/**
+ * Run the callback after window load (or immediately if the page has already loaded).
+ * @param {Function} callback
+ * @returns {void}
+ **/
+function onWindowLoad(callback) {
+    if (document.readyState === 'complete') {
+        callback();
+    } else {
+        window.addEventListener('load', callback, { once: true });
+    }
+}
+
+/**
+ * Resolve with the first element matching the selector, or null after the timeout.
+ * @param {string} selector
+ * @param {number} timeout - Milliseconds to wait before giving up
+ * @returns {Promise<Element|null>}
+ **/
+function waitForElement(selector, timeout = 10000) {
+    return new Promise((resolve) => {
+        const existing = document.querySelector(selector);
+        if (existing) {
+            resolve(existing);
+            return;
+        }
+
+        const observer = new MutationObserver(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                observer.disconnect();
+                clearTimeout(timer);
+                resolve(element);
+            }
+        });
+        const timer = setTimeout(() => {
+            observer.disconnect();
+            resolve(null);
+        }, timeout);
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    });
+}
+
+function isEditableTarget(target) {
+    return Boolean(target && (
+        target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.tagName === 'SELECT'
+        || target.isContentEditable
+    ));
+}
+
+function hasCommandModifier(event) {
+    return Boolean(event.ctrlKey || event.metaKey || event.altKey);
+}
+
+/**
+ * Pick the next preset speed above (direction > 0) or below (direction < 0) the current rate.
+ * Works even when the current rate is not one of the presets.
+ * @param {number} currentRate
+ * @param {number} direction
+ * @returns {number|null} The next speed, or null when already at the limit
+ **/
+function getNextSpeed(currentRate, direction) {
+    const epsilon = 1e-6;
+    if (direction > 0) {
+        return SPEED_STEPS.find((speed) => speed > currentRate + epsilon) ?? null;
+    }
+    return [...SPEED_STEPS].reverse().find((speed) => speed < currentRate - epsilon) ?? null;
+}
+
+function setInputValue(input, value) {
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function isCookieFlagEnabled(value) {
+    return value !== null && !['', '0', 'false', 'off'].includes(String(value).toLowerCase());
+}
+
 function injectStyles() {
     const css = `
         .anigamerkit-settings-panel {
@@ -54,6 +150,8 @@ function injectStyles() {
         .anigamerkit-settings-checkbox {
             width: 20px;
             height: 20px;
+            /* Native checkbox tinted to match the Apply button */
+            accent-color: rgb(64, 195, 221);
         }
 
         .anigamerkit-settings-label {
@@ -96,8 +194,8 @@ function injectStyles() {
             position: fixed !important;
             right: auto !important;
             bottom: auto !important;
-            width: 420px;
-            height: 236.25px;
+            width: 30vw;
+            aspect-ratio: 16 / 9;
             min-width: min(240px, calc(100vw - 32px)) !important;
             min-height: min(135px, calc(100vh - 88px)) !important;
             max-width: calc(100vw - 32px) !important;
@@ -109,15 +207,8 @@ function injectStyles() {
             border-radius: 8px;
             box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
             cursor: grab;
-            z-index: 2147483646 !important;
-        }
-
-        .anigamerkit-floating-resize-handle {
-            position: absolute;
-            box-sizing: border-box;
-            z-index: 2147483647;
-            touch-action: none;
-            user-select: none;
+            /* Stays below the settings button and panel (2147483647) so they are never covered */
+            z-index: 2147483640 !important;
         }
 
         .anigamerkit-floating-video.is-dragging {
@@ -133,6 +224,11 @@ function injectStyles() {
         }
 
         .anigamerkit-floating-resize-handle {
+            position: absolute;
+            box-sizing: border-box;
+            z-index: 2147483647;
+            touch-action: none;
+            user-select: none;
             width: 20px;
             height: 20px;
             border: 0;
@@ -183,6 +279,42 @@ function injectStyles() {
             cursor: nwse-resize;
         }
 
+        .anigamerkit-context-menu {
+            position: fixed;
+            z-index: 2147483647;
+            min-width: 150px;
+            padding: 4px 0;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+        }
+
+        .anigamerkit-context-menu-item {
+            display: block;
+            width: 100%;
+            padding: 8px 14px;
+            border: 0;
+            background: transparent;
+            color: #222;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .anigamerkit-context-menu-item:hover:not(:disabled),
+        .anigamerkit-context-menu-item:focus-visible {
+            background-color: rgba(64, 195, 221, 0.18);
+            outline: none;
+        }
+
+        .anigamerkit-context-menu-item:disabled {
+            color: #999;
+            cursor: default;
+        }
+
         #custom-input-box {
             z-index: 2147483647 !important;
         }
@@ -203,22 +335,19 @@ function filterPage(DEFAULT_SETTINGS) {
     const pageType = getPageType(currentUrl);
 
     if (pageType === 'home') {
-        // If homepage
-        console.log("here is homepage");
-
         if (GM_getValue('autoExpandMenu', DEFAULT_SETTINGS.autoExpandMenu)) {
             triggerShowMoreButton();
         }
     } else if (pageType === 'video') {
-        // If video page
-        console.log("here is video page, " + currentUrl.href);
-
         if (GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster)) {
             showVideoPoster();
         }
 
         if (GM_getValue('enableFloatingVideo', DEFAULT_SETTINGS.enableFloatingVideo)) {
-            initializeFloatingVideo();
+            initializeFloatingVideo(() => GM_getValue(
+                'floatingVideoWidthPercent',
+                DEFAULT_SETTINGS.floatingVideoWidthPercent
+            ));
         }
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
@@ -237,16 +366,12 @@ function filterPage(DEFAULT_SETTINGS) {
         }
 
     } else if (pageType === 'payment') {
-        // If payment page
-        console.log("here is payment page, " + currentUrl.href);
-
         if (GM_getValue('enableAutoInputPaymentInfo', DEFAULT_SETTINGS.enableAutoInputPaymentInfo)) {
             const phoneBarcode = GM_getValue('phoneBarcode', null);
-            autoInputPaymentInfo(phoneBarcode);
+            waitForElement('input.checkBtns, .payment-form-invoice').then(() => {
+                autoInputPaymentInfo(phoneBarcode);
+            });
         }
-
-    } else {
-        console.log(`failed at ${currentUrl.href}`);
     }
 }
 
@@ -269,35 +394,44 @@ function getPageType(url) {
 }
 
 function triggerShowMoreButton() {
-    const showMoreBtn = document.querySelector('.btn-show-more');
-    if (showMoreBtn) {
-        showMoreBtn.click();
-    } else {
-        console.error('Button with class "btn-show-more" not found.');
-    }
+    // The site binds the button's click handler late, so a click before window load does nothing
+    onWindowLoad(() => {
+        waitForElement('.btn-show-more').then((showMoreBtn) => {
+            if (showMoreBtn) {
+                showMoreBtn.click();
+            } else {
+                console.error('Button with class "btn-show-more" not found.');
+            }
+        });
+    });
 }
 
 function showVideoPoster() {
-    // Hide R18 divs
-    const r18DivObserver = new MutationObserver(() => {
-        document.querySelectorAll('.R18').forEach(el => el.style.display = 'none');
-    });
-    r18DivObserver.observe(document.body, { childList: true, subtree: true });
+    // Hide R18 overlays with a stylesheet instead of watching every DOM mutation
+    const style = document.createElement('style');
+    style.textContent = '.R18 { display: none !important; }';
+    document.head.appendChild(style);
 
-    // Auto agree to adult check
-    const video = document.querySelector('video');
-    if (video) {
-        video.addEventListener('click', function (event) {
-            if (event.button === 0) {
-                const agreeBtn = document.getElementById('adult');
-                if (agreeBtn) agreeBtn.click();
-            }
-        });
-    }
+    // Auto agree to adult check; delegated so it also works for a video added later
+    document.addEventListener('click', (event) => {
+        if (event.button !== 0 || !event.target?.closest?.('video')) {
+            return;
+        }
+        const agreeBtn = document.getElementById('adult');
+        if (agreeBtn) {
+            agreeBtn.click();
+        }
+    }, true);
+
+    // Right-click on the player: copy the poster image or URL
+    initializePosterMenu();
 }
 
 function modifySpeed(event) {
     if (!event.shiftKey || (event.key !== '>' && event.key !== '<')) {
+        return;
+    }
+    if (hasCommandModifier(event) || isEditableTarget(event.target)) {
         return;
     }
 
@@ -306,33 +440,16 @@ function modifySpeed(event) {
         return;
     }
 
-    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-    let currentSpeedIndex = speeds.indexOf(video.playbackRate);
-
-    if (event.shiftKey && event.key === '>') {
-        // speed up
-        if (currentSpeedIndex < speeds.length - 1) {
-            currentSpeedIndex++;
-            video.playbackRate = speeds[currentSpeedIndex];
-            showFloatingMessage(video.playbackRate + "X", 500, 'video-bottom-right');
-        }
-    } else if (event.shiftKey && event.key === '<') {
-        // speed down
-        if (currentSpeedIndex > 0) {
-            currentSpeedIndex--;
-            video.playbackRate = speeds[currentSpeedIndex];
-            showFloatingMessage(video.playbackRate + "X", 500, 'video-bottom-right');
-        }
+    const nextSpeed = getNextSpeed(video.playbackRate, event.key === '>' ? 1 : -1);
+    if (nextSpeed === null) {
+        return;
     }
+    video.playbackRate = nextSpeed;
+    showFloatingMessage(nextSpeed + "X", 500, 'video-bottom-right');
 }
 
 function skipVideo(event, duration) {
-    if (event.key !== '1') {
-        return;
-    }
-
-    const target = event.target;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+    if (event.key !== '1' || hasCommandModifier(event) || isEditableTarget(event.target)) {
         return;
     }
 
@@ -359,9 +476,13 @@ function autoInputPaymentInfo(phoneBarcode = null) {
         if (invoiceTypeSelect) {
             invoiceTypeSelect.value = '3';
             invoiceTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-            const phoneBarcodeInput = document.querySelector('input[name="cell-cardno"]');
-            if (phoneBarcodeInput && phoneBarcode) {
-                phoneBarcodeInput.value = phoneBarcode;
+            if (phoneBarcode) {
+                // The barcode field may only render after the select's change handler runs
+                waitForElement('input[name="cell-cardno"]', 3000).then((phoneBarcodeInput) => {
+                    if (phoneBarcodeInput) {
+                        setInputValue(phoneBarcodeInput, phoneBarcode);
+                    }
+                });
             }
         }
     }
@@ -393,11 +514,13 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
     msg.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
     msg.style.color = 'white';
     msg.style.borderRadius = '10px';
-    msg.style.zIndex = '1001';
+    msg.style.zIndex = '2147483647';
+    msg.style.pointerEvents = 'none';
     msg.style.opacity = '0';
     msg.style.transition = 'opacity 0.3s';
 
-    document.documentElement.appendChild(msg);
+    // In fullscreen only the fullscreen element's subtree is rendered
+    (document.fullscreenElement || document.documentElement).appendChild(msg);
 
     switch (position) {
         case 'bottom-center':
@@ -418,7 +541,6 @@ function showFloatingMessage(message, duration = 2000, position = 'bottom-center
         case 'video-bottom-right':
             const video = document.querySelector('video');
             if (video) {
-                console.log('msg.offsetHeight: ', msg.offsetHeight);
                 const videoRect = video.getBoundingClientRect();
                 msg.style.top = `${videoRect.bottom - msg.offsetHeight - 20}px`;
                 msg.style.left = `${videoRect.right - msg.offsetWidth - 20}px`;

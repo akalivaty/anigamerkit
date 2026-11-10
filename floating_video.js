@@ -2,10 +2,11 @@
 
 const FLOATING_VIDEO_ENTER_THRESHOLD = 0.5;
 const FLOATING_VIDEO_EXIT_THRESHOLD = 0.6;
-const FLOATING_VIDEO_MAX_WIDTH = 420;
+const FLOATING_VIDEO_DEFAULT_WIDTH_PERCENT = 30;
 const FLOATING_VIDEO_MIN_WIDTH = 240;
 const FLOATING_VIDEO_MIN_HEIGHT = 135;
-const FLOATING_VIDEO_VIEWPORT_GAP = 16;
+// Right gap matches the settings button; bottom gap keeps the player above it
+const FLOATING_VIDEO_VIEWPORT_GAP = 20;
 const FLOATING_VIDEO_BOTTOM_GAP = 72;
 const FLOATING_VIDEO_DRAG_THRESHOLD = 5;
 const FLOATING_VIDEO_INTERACTIVE_SELECTOR = [
@@ -56,48 +57,72 @@ function getDraggedFloatingRect(rect, deltaX, deltaY, viewportWidth, viewportHei
     };
 }
 
-function getInitialFloatingSize(rememberedSize, aspectRatio, viewportWidth, viewportHeight) {
+/**
+ * Size of the floating player: a percentage of the viewport width, height locked to the aspect ratio,
+ * shrunk (keeping the ratio) when it would not fit above the settings button.
+ **/
+function getFloatingSize(widthPercent, aspectRatio, viewportWidth, viewportHeight) {
     const availableWidth = Math.max(0, viewportWidth - FLOATING_VIDEO_VIEWPORT_GAP * 2);
     const availableHeight = Math.max(
         0,
         viewportHeight - FLOATING_VIDEO_BOTTOM_GAP - FLOATING_VIDEO_VIEWPORT_GAP
     );
-    const defaultWidth = Math.min(FLOATING_VIDEO_MAX_WIDTH, availableWidth);
-    return {
-        width: Math.min(rememberedSize?.width ?? defaultWidth, availableWidth),
-        height: Math.min(rememberedSize?.height ?? defaultWidth / aspectRatio, availableHeight)
-    };
+    const percent = Number.isFinite(Number(widthPercent)) && Number(widthPercent) > 0
+        ? Number(widthPercent)
+        : FLOATING_VIDEO_DEFAULT_WIDTH_PERCENT;
+    const maxWidth = Math.min(availableWidth, availableHeight * aspectRatio);
+    const width = clampFloatingValue(
+        viewportWidth * percent / 100,
+        Math.min(FLOATING_VIDEO_MIN_WIDTH, maxWidth),
+        maxWidth
+    );
+    return { width, height: width / aspectRatio };
 }
 
+/**
+ * Resize from a corner while keeping the aspect ratio; the opposite corner stays fixed.
+ **/
 function getResizedFloatingRect(rect, deltaX, deltaY, direction, viewportWidth, viewportHeight) {
-    const minWidth = Math.min(FLOATING_VIDEO_MIN_WIDTH, viewportWidth);
-    const minHeight = Math.min(FLOATING_VIDEO_MIN_HEIGHT, viewportHeight);
-    let { left, top, width, height } = rect;
+    const aspectRatio = rect.width / rect.height;
+    const right = rect.left + rect.width;
+    const bottom = rect.top + rect.height;
+    const growsEast = direction.includes('e');
+    const growsSouth = direction.includes('s');
 
-    if (direction.includes('e')) {
-        width = clampFloatingValue(rect.width + deltaX, minWidth, viewportWidth - rect.left);
-    } else if (direction.includes('w')) {
-        const right = rect.left + rect.width;
-        width = clampFloatingValue(rect.width - deltaX, minWidth, right);
-        left = right - width;
-    }
+    // Follow whichever axis the pointer moved further along
+    const widthFromX = rect.width + (growsEast ? deltaX : -deltaX);
+    const widthFromY = (rect.height + (growsSouth ? deltaY : -deltaY)) * aspectRatio;
+    const requestedWidth = Math.abs(widthFromX - rect.width) >= Math.abs(widthFromY - rect.width)
+        ? widthFromX
+        : widthFromY;
 
-    if (direction.includes('s')) {
-        height = clampFloatingValue(rect.height + deltaY, minHeight, viewportHeight - rect.top);
-    } else if (direction.includes('n')) {
-        const bottom = rect.top + rect.height;
-        height = clampFloatingValue(rect.height - deltaY, minHeight, bottom);
-        top = bottom - height;
-    }
+    const maxWidth = Math.min(
+        growsEast ? viewportWidth - rect.left : right,
+        (growsSouth ? viewportHeight - rect.top : bottom) * aspectRatio
+    );
+    const minWidth = Math.min(
+        Math.max(FLOATING_VIDEO_MIN_WIDTH, FLOATING_VIDEO_MIN_HEIGHT * aspectRatio),
+        maxWidth
+    );
+    const width = clampFloatingValue(requestedWidth, minWidth, maxWidth);
+    const height = width / aspectRatio;
 
-    return { left, top, width, height };
+    return {
+        left: growsEast ? rect.left : right - width,
+        top: growsSouth ? rect.top : bottom - height,
+        width,
+        height
+    };
 }
 
 function isFloatingVideoInteractiveTarget(target) {
     return Boolean(target?.closest?.(FLOATING_VIDEO_INTERACTIVE_SELECTOR));
 }
 
-function initializeFloatingVideo() {
+/**
+ * @param {Function} getWidthPercent - Returns the configured player width as a % of the viewport
+ **/
+function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_WIDTH_PERCENT) {
     if (typeof IntersectionObserver !== 'function') {
         return;
     }
@@ -111,7 +136,8 @@ function initializeFloatingVideo() {
     let playerAspectRatio = 16 / 9;
     let originalPlayerLayoutStyles = null;
     let interactionControls = [];
-    let rememberedFloatingSize = null;
+    // True once the user resized this floating session by hand; window resizes then keep that size
+    let hasManualSize = false;
 
     const isVideoPlaying = () => Boolean(
         videoElement
@@ -135,16 +161,19 @@ function initializeFloatingVideo() {
         }
     };
 
+    const getConfiguredSize = () => getFloatingSize(
+        getWidthPercent(),
+        playerAspectRatio,
+        window.innerWidth,
+        window.innerHeight
+    );
+
     const updateFloatingSize = () => {
         if (!isFloating || !playerElement) {
             return;
         }
-        const { width, height } = getInitialFloatingSize(
-            rememberedFloatingSize,
-            playerAspectRatio,
-            window.innerWidth,
-            window.innerHeight
-        );
+        const { width, height } = getConfiguredSize();
+        hasManualSize = false;
         applyFloatingRect({
             left: Math.max(0, window.innerWidth - width - FLOATING_VIDEO_VIEWPORT_GAP),
             top: Math.max(0, window.innerHeight - height - FLOATING_VIDEO_BOTTOM_GAP),
@@ -217,11 +246,7 @@ function initializeFloatingVideo() {
                     }, { capture: true, once: true });
                 }
                 if (mode === 'resize') {
-                    const resizedRect = playerElement.getBoundingClientRect();
-                    rememberedFloatingSize = {
-                        width: resizedRect.width,
-                        height: resizedRect.height
-                    };
+                    hasManualSize = true;
                 }
                 updateDanmukuPosition();
             }
@@ -365,14 +390,19 @@ function initializeFloatingVideo() {
                 return;
             }
             const rect = playerElement.getBoundingClientRect();
+            // Keep the dragged position; rescale to the configured % unless resized by hand
+            const size = hasManualSize ? rect : getConfiguredSize();
             applyFloatingRect(getDraggedFloatingRect(
-                rect,
+                { left: rect.left, top: rect.top, width: size.width, height: size.height },
                 0,
                 0,
                 window.innerWidth,
                 window.innerHeight
             ));
+            updateDanmukuPosition();
         });
+        // Apply a new width from the settings panel right away
+        window.addEventListener('anigamerkit:settings-saved', updateFloatingSize);
         if (typeof ResizeObserver === 'function') {
             const resizeObserver = new ResizeObserver(() => {
                 if (isFloating) {

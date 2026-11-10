@@ -157,24 +157,23 @@ test('floating video dragging stays inside the viewport', async () => {
   );
 });
 
-test('floating video reuses remembered size only within the page lifecycle', async () => {
-  const { getInitialFloatingSize } = await loadFunctions(
-    'floating_video.js',
-    ['getInitialFloatingSize']
+test('floating video width is a viewport percentage with a locked aspect ratio', async () => {
+  const { getFloatingSize } = await loadFunctions('floating_video.js', ['getFloatingSize']);
+  const near = (actual, expected) => assert.ok(
+    Math.abs(actual - expected) < 1e-6,
+    `${actual} is not close to ${expected}`
   );
 
-  assert.deepEqual(
-    { ...getInitialFloatingSize(null, 16 / 9, 1000, 800) },
-    { width: 420, height: 236.25 }
-  );
-  assert.deepEqual(
-    { ...getInitialFloatingSize({ width: 560, height: 315 }, 16 / 9, 1000, 800) },
-    { width: 560, height: 315 }
-  );
-  assert.deepEqual(
-    { ...getInitialFloatingSize({ width: 560, height: 315 }, 16 / 9, 300, 200) },
-    { width: 268, height: 112 }
-  );
+  assert.deepEqual({ ...getFloatingSize(30, 16 / 9, 1000, 800) }, { width: 300, height: 168.75 });
+  // Invalid setting falls back to the 30% default
+  assert.deepEqual({ ...getFloatingSize('abc', 16 / 9, 1000, 800) }, { width: 300, height: 168.75 });
+  // Never smaller than the minimum width
+  assert.deepEqual({ ...getFloatingSize(30, 16 / 9, 600, 800) }, { width: 240, height: 135 });
+
+  // Too tall for a short window: shrinks and keeps 16:9 so it stays above the settings button
+  const short = getFloatingSize(100, 16 / 9, 1000, 400);
+  near(short.height, 400 - 72 - 20);
+  near(short.width / short.height, 16 / 9);
 });
 
 test('floating video can resize from all four corners', async () => {
@@ -187,10 +186,19 @@ test('floating video can resize from all four corners', async () => {
     ...getResizedFloatingRect(startRect, deltaX, deltaY, direction, 1000, 700)
   });
 
-  assert.deepEqual(resize(50, 25, 'se'), { left: 100, top: 100, width: 450, height: 250 });
-  assert.deepEqual(resize(-50, 25, 'sw'), { left: 50, top: 100, width: 450, height: 250 });
-  assert.deepEqual(resize(50, -25, 'ne'), { left: 100, top: 75, width: 450, height: 250 });
-  assert.deepEqual(resize(-50, -25, 'nw'), { left: 50, top: 75, width: 450, height: 250 });
+  assert.deepEqual(resize(50, 25, 'se'), { left: 100, top: 100, width: 450, height: 253.125 });
+  assert.deepEqual(resize(-50, 25, 'sw'), { left: 50, top: 100, width: 450, height: 253.125 });
+  assert.deepEqual(resize(50, -25, 'ne'), { left: 100, top: 71.875, width: 450, height: 253.125 });
+  assert.deepEqual(resize(-50, -25, 'nw'), { left: 50, top: 71.875, width: 450, height: 253.125 });
+
+  // Vertical drag drives the size when it moved further, ratio stays 16:9
+  const tall = resize(10, 100, 'se');
+  assert.ok(Math.abs(tall.height - 325) < 1e-6);
+  assert.ok(Math.abs(tall.width / tall.height - 16 / 9) < 1e-6);
+
+  // Clamped to the viewport and to the minimum size
+  assert.deepEqual(resize(1000, 1000, 'se'), { left: 100, top: 100, width: 900, height: 506.25 });
+  assert.deepEqual(resize(-1000, 0, 'se'), { left: 100, top: 100, width: 240, height: 135 });
 });
 
 test('floating video excludes existing controls from dragging', async () => {
@@ -240,5 +248,94 @@ test('source and bundled metadata contain no @require directives', async () => {
 test('bundled userscript includes the floating video module', async () => {
   const bundled = await readFile(path.join(projectRoot, 'dist', 'anigamer_kits.user.js'), 'utf8');
 
-  assert.match(bundled, /function initializeFloatingVideo\(\)/);
+  assert.match(bundled, /function initializeFloatingVideo\(/);
+});
+
+test('getNextSpeed steps from rates that are not presets', async () => {
+  const { getNextSpeed } = await loadFunctions('utils.js', ['getNextSpeed']);
+
+  assert.equal(getNextSpeed(1, 1), 1.25);
+  assert.equal(getNextSpeed(1, -1), 0.75);
+  assert.equal(getNextSpeed(1.1, 1), 1.25);
+  assert.equal(getNextSpeed(1.1, -1), 1);
+  assert.equal(getNextSpeed(2, 1), null);
+  assert.equal(getNextSpeed(0.5, -1), null);
+  assert.equal(getNextSpeed(3, -1), 2);
+});
+
+test('modifySpeed ignores keys typed into text fields', async () => {
+  const video = { playbackRate: 1 };
+  const document = { querySelector: () => video };
+  const { modifySpeed } = await loadFunctions('utils.js', ['modifySpeed'], { document });
+
+  modifySpeed({ shiftKey: true, key: '>', target: { tagName: 'INPUT' } });
+  assert.equal(video.playbackRate, 1);
+});
+
+test('skipVideo ignores modifier combos and text fields', async () => {
+  const video = { duration: 1400, currentTime: 100 };
+  const document = { querySelector: () => video };
+  const { skipVideo } = await loadFunctions('utils.js', ['skipVideo'], { document });
+  const keyEvent = (extra) => ({
+    key: '1',
+    target: { tagName: 'DIV' },
+    preventDefault() {},
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+    ...extra
+  });
+
+  skipVideo(keyEvent({ ctrlKey: true }), 89);
+  skipVideo(keyEvent({ metaKey: true }), 89);
+  skipVideo(keyEvent({ target: { tagName: 'TEXTAREA' } }), 89);
+  assert.equal(video.currentTime, 100);
+
+  skipVideo(keyEvent(), 89);
+  assert.equal(video.currentTime, 189);
+});
+
+test('dark theme cookie treats "0" and missing as disabled', async () => {
+  const { isCookieFlagEnabled } = await loadFunctions('utils.js', ['isCookieFlagEnabled']);
+
+  assert.equal(isCookieFlagEnabled(null), false);
+  assert.equal(isCookieFlagEnabled('0'), false);
+  assert.equal(isCookieFlagEnabled('false'), false);
+  assert.equal(isCookieFlagEnabled('1'), true);
+});
+
+test('getPosterUrl prefers data-video-poster and falls back to JSON-LD', async () => {
+  const posterDocument = ({ dataPoster = null, ldJson = [] } = {}) => ({
+    querySelector: (selector) => (selector === '#video-container' && dataPoster
+      ? { dataset: { videoPoster: dataPoster } }
+      : null),
+    querySelectorAll: () => ldJson.map((textContent) => ({ textContent }))
+  });
+  const load = async (document) => (await loadFunctions(
+    'poster_menu.js',
+    ['getPosterUrl'],
+    { document }
+  )).getPosterUrl();
+
+  assert.equal(
+    await load(posterDocument({
+      dataPoster: 'https://p2.bahamut.com.tw/a.jpg',
+      ldJson: ['{"@type":"VideoObject","thumbnailUrl":"https://p2.bahamut.com.tw/b.jpg"}']
+    })),
+    'https://p2.bahamut.com.tw/a.jpg'
+  );
+  // Malformed block is skipped, VideoObject inside an array is found
+  assert.equal(
+    await load(posterDocument({
+      ldJson: ['{not json', '[{"@type":"BreadcrumbList"},{"@type":"VideoObject","thumbnailUrl":["https://p2.bahamut.com.tw/c.jpg"]}]']
+    })),
+    'https://p2.bahamut.com.tw/c.jpg'
+  );
+  // VideoObject nested in @graph
+  assert.equal(
+    await load(posterDocument({
+      ldJson: ['{"@graph":[{"@type":["VideoObject"],"thumbnailUrl":"https://p2.bahamut.com.tw/d.jpg"}]}']
+    })),
+    'https://p2.bahamut.com.tw/d.jpg'
+  );
+  assert.equal(await load(posterDocument()), null);
 });

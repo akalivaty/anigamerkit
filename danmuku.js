@@ -8,8 +8,15 @@ function toggleDanmukuBox(event) {
         return;
     }
 
+    // Only take over Tab when focus is on the page itself, the player, or our own box,
+    // so keyboard navigation through links and buttons keeps working.
     const target = event.target;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) && target.id !== 'custom-input-box') {
+    const isOwnBox = target?.id === 'custom-input-box';
+    const isPageOrPlayer = !target
+        || target === document.body
+        || target === document.documentElement
+        || Boolean(target.closest?.('.videoframe'));
+    if (!isOwnBox && (!isPageOrPlayer || isEditableTarget(target))) {
         return;
     }
 
@@ -49,7 +56,6 @@ function toggleDanmukuBox(event) {
     getVideoRect();
 
     if (danmukuBox.style.display === 'none' || danmukuBox.style.display === '') {
-        console.log('Displaying danmukuBox');
         danmukuBox.style.display = 'block';
         danmukuBox.focus();
         document.addEventListener('keydown', listenDanmuku, true);
@@ -68,7 +74,6 @@ function closeDanmukuBox() {
         return;
     }
 
-    console.log('Hiding danmukuBox');
     danmukuBox.style.display = 'none';
     const videoElement = document.querySelector('video');
     if (videoElement) {
@@ -86,10 +91,8 @@ function updateDanmukuBoxPosition() {
         getVideoRect();
     }, 50);
 
-    // Reopen the danmuku box if it was open when the window was resized
+    // Keep focus in the danmuku box if it was open when the layout changed
     if (danmukuBox.style.display === 'block') {
-        danmukuBox.style.display = 'none';
-        danmukuBox.style.display = 'block';
         danmukuBox.focus();
     }
 }
@@ -103,7 +106,6 @@ function getVideoRect() {
         danmukuBox.style.top = `${vertialOffset}px`;
         danmukuBox.style.left = `${horizontalOffset}px`;
         danmukuBox.style.transform = 'translate(-50%, -50%)';
-        console.log('vertialOffset:', vertialOffset, '\thorizontalOffset:', horizontalOffset);
     } else {
         console.error('Video element not found');
     }
@@ -140,7 +142,6 @@ function sendDanmuku(danmuku, autoCloseInputBox = true) {
 
     danmuInput.value = danmuku;
     sendButton.click();
-    console.log('Danmuku sent:', danmuku);
 
     if (autoCloseInputBox) {
         closeDanmukuBox();

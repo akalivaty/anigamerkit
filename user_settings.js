@@ -9,12 +9,20 @@ const SETTINGS_SCHEMA = [
     {
         key: 'showVideoPoster',
         checkboxId: 'showVideoPosterCheckbox',
-        label: '影片頁面顯示封面圖'
+        label: '影片頁面顯示封面圖，右鍵可複製封面'
     },
     {
         key: 'enableFloatingVideo',
         checkboxId: 'floatingVideoCheckbox',
-        label: '影片捲出畫面時顯示右下角浮動播放器'
+        label: '影片捲出畫面時顯示浮動播放器，寬度 (視窗 %)',
+        input: {
+            key: 'floatingVideoWidthPercent',
+            id: 'floatingVideoWidthPercent',
+            type: 'number',
+            min: 10,
+            max: 100,
+            placeholder: '寬度 %'
+        }
     },
     {
         key: 'enableCenteredDanmukuBox',
@@ -29,7 +37,7 @@ const SETTINGS_SCHEMA = [
             key: 'skipDuration',
             id: 'skipDuration',
             type: 'number',
-            min: 0,
+            min: 1,
             placeholder: '輸入跳過秒數'
         }
     },
@@ -89,6 +97,8 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
 
     if (settingPanel) {
         settingBtn.style.transform = 'rotate(-360deg)';
+        // Drop the id now so a click during the fade-out opens a fresh panel
+        settingPanel.removeAttribute('id');
         settingPanel.classList.remove('is-visible');
 
         setTimeout(() => {
@@ -96,7 +106,7 @@ function toggleSettingsPanel(DEFAULT_SETTINGS) {
         }, 500);
     } else {
         settingBtn.style.transform = 'rotate(360deg)';
-        createSettingsPanel(DEFAULT_SETTINGS, getCookie('ANIME_dark_theme'));
+        createSettingsPanel(DEFAULT_SETTINGS, isCookieFlagEnabled(getCookie('ANIME_dark_theme')));
     }
 }
 
@@ -141,7 +151,8 @@ function createSettingsPanel(DEFAULT_SETTINGS, isDarkMode) {
 
     applyBtn.onclick = () => {
         optionControls.forEach((control) => saveOption(control, DEFAULT_SETTINGS));
-        showFloatingMessage('已套用設定');
+        window.dispatchEvent(new Event('anigamerkit:settings-saved'));
+        showFloatingMessage('已儲存設定，重新整理頁面後生效');
     };
 
     settingPanel.appendChild(applyBtn);
@@ -197,6 +208,9 @@ function createOption(setting, isDarkMode) {
 
         if (setting.input.type === 'number') {
             inputBox.min = setting.input.min;
+            if (setting.input.max !== undefined) {
+                inputBox.max = setting.input.max;
+            }
             inputBox.step = '1';
         }
         if (setting.input.uppercase) {
@@ -226,7 +240,8 @@ function saveOption(control, DEFAULT_SETTINGS) {
 
     if (inputSetting.type === 'number') {
         const numericValue = Number(rawValue);
-        value = rawValue !== '' && Number.isInteger(numericValue) && numericValue >= inputSetting.min
+        const withinMax = inputSetting.max === undefined || numericValue <= inputSetting.max;
+        value = rawValue !== '' && Number.isInteger(numericValue) && numericValue >= inputSetting.min && withinMax
             ? numericValue
             : previousValue;
     } else if (inputSetting.uppercase && rawValue) {
