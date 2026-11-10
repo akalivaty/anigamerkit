@@ -325,6 +325,25 @@ function injectStyles() {
             cursor: default;
         }
 
+        .anigamerkit-context-menu.is-dark {
+            background-color: rgba(40, 40, 40, 0.95);
+            border-color: #4a4a4a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .anigamerkit-context-menu.is-dark .anigamerkit-context-menu-item {
+            color: #eee;
+        }
+
+        .anigamerkit-context-menu.is-dark .anigamerkit-context-menu-item:hover:not(:disabled),
+        .anigamerkit-context-menu.is-dark .anigamerkit-context-menu-item:focus-visible {
+            background-color: rgba(64, 195, 221, 0.3);
+        }
+
+        .anigamerkit-context-menu.is-dark .anigamerkit-context-menu-item:disabled {
+            color: #777;
+        }
+
         #custom-input-box {
             z-index: 2147483647 !important;
         }

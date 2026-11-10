@@ -353,6 +353,30 @@ test('getPosterUrl prefers the video poster, then data-video-poster, then JSON-L
   assert.equal(await load(posterDocument()), null);
 });
 
+test('canCaptureVideoFrame only allows a started, non-ad frame without the episode poster', async () => {
+  const { canCaptureVideoFrame } = await loadFunctions('poster_menu.js', ['canCaptureVideoFrame']);
+  const makeVideo = ({ classes = ['vjs-has-started'], readyState = 4, videoWidth = 1920, posterShown = false } = {}) => {
+    const player = {
+      classList: { contains: (name) => classes.includes(name) },
+      querySelector: () => (posterShown ? { hidden: false } : { hidden: true })
+    };
+    return { readyState, videoWidth, videoHeight: 1080, closest: () => player };
+  };
+
+  assert.equal(canCaptureVideoFrame(null), false);
+  assert.equal(canCaptureVideoFrame(makeVideo()), true);
+  // Not started yet: offer the poster only
+  assert.equal(canCaptureVideoFrame(makeVideo({ classes: [] })), false);
+  assert.equal(canCaptureVideoFrame(makeVideo({ readyState: 1 })), false);
+  assert.equal(canCaptureVideoFrame(makeVideo({ videoWidth: 0 })), false);
+  assert.equal(
+    canCaptureVideoFrame(makeVideo({ classes: ['vjs-has-started', 'vjs-anigamer-m3u8-ad-playing'] })),
+    false
+  );
+  // Switched episode, new one not playing yet
+  assert.equal(canCaptureVideoFrame(makeVideo({ posterShown: true })), false);
+});
+
 test('release notes group conventional commits and skip release bumps', async () => {
   const { formatReleaseNotes } = await import('../scripts/release-notes.mjs');
   const notes = formatReleaseNotes([

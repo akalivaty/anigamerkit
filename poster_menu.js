@@ -10,6 +10,43 @@ const EPISODE_POSTER_VIDEO_SELECTOR = '#ani_video_html5_api';
 const EPISODE_POSTER_WAIT_TIMEOUT = 30000;
 
 /**
+ * Whether the right-click menu should offer the current frame: playback of this
+ * episode has started, no ad is playing and the episode-switch poster is not shown.
+ * @param {HTMLVideoElement|null} video
+ * @returns {boolean}
+ **/
+function canCaptureVideoFrame(video) {
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+        return false;
+    }
+    const player = video.closest('.video-js');
+    if (!player?.classList.contains('vjs-has-started')
+        || player.classList.contains('vjs-anigamer-m3u8-ad-playing')) {
+        return false;
+    }
+    const episodePoster = player.querySelector('.anigamerkit-episode-poster');
+    return !episodePoster || episodePoster.hidden;
+}
+
+/**
+ * Draw the frame on screen right now at the video's native resolution.
+ * The stream is a same-origin MSE blob without DRM, so the canvas is not tainted.
+ * @returns {HTMLCanvasElement|null}
+ **/
+function captureVideoFrame(video) {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas;
+    } catch (error) {
+        console.error('Failed to capture video frame:', error);
+        return null;
+    }
+}
+
+/**
  * Read the current episode's poster URL.
  * Prefers the <video> poster (the site updates it on in-page episode switches),
  * then the server-rendered data-video-poster, then the JSON-LD VideoObject.
@@ -99,25 +136,32 @@ function openPosterMenu(x, y) {
     closePosterMenu();
 
     const posterUrl = getPosterUrl();
+    // Grab the frame now, so it matches the moment of the right-click even if playback goes on
+    const video = document.querySelector(EPISODE_POSTER_VIDEO_SELECTOR);
+    const frameCanvas = canCaptureVideoFrame(video) ? captureVideoFrame(video) : null;
+
     const menu = document.createElement('div');
     menu.className = 'anigamerkit-context-menu';
+    // Read on every open so switching the site theme applies without a reload
+    menu.classList.toggle('is-dark', isCookieFlagEnabled(getCookie('ANIME_dark_theme')));
     menu.setAttribute('role', 'menu');
 
     const actions = [
-        ['複製封面圖片', copyPosterImage],
-        ['複製封面網址', copyPosterUrl]
+        ...(frameCanvas ? [['複製當前畫面', () => copyVideoFrame(frameCanvas), true]] : []),
+        ['複製封面圖片', () => copyPosterImage(posterUrl), Boolean(posterUrl)],
+        ['複製封面網址', () => copyPosterUrl(posterUrl), Boolean(posterUrl)]
     ];
-    for (const [label, action] of actions) {
+    for (const [label, action, enabled] of actions) {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'anigamerkit-context-menu-item';
         item.setAttribute('role', 'menuitem');
         item.textContent = label;
-        item.disabled = !posterUrl;
+        item.disabled = !enabled;
         item.addEventListener('click', (event) => {
             event.stopPropagation();
             closePosterMenu();
-            action(posterUrl);
+            action();
         });
         menu.appendChild(item);
     }
@@ -170,20 +214,31 @@ function copyPosterUrl(url) {
 }
 
 function copyPosterImage(url) {
+    writePngToClipboard(() => downloadImageBlob(url).then(convertImageToPng), '已複製封面圖片');
+}
+
+function copyVideoFrame(canvas) {
+    writePngToClipboard(() => canvasToPng(canvas), '已複製當前畫面');
+}
+
+/**
+ * @param {Function} createPngBlob - Returns a promise of the PNG blob
+ **/
+function writePngToClipboard(createPngBlob, successMessage) {
     if (!navigator.clipboard?.write || typeof ClipboardItem !== 'function') {
         showFloatingMessage('瀏覽器不支援複製圖片');
         return;
     }
 
     // Hand the clipboard a promise right away so the click's user activation
-    // still counts while the image downloads (required by Safari).
-    const pngBlob = downloadImageBlob(url).then(convertImageToPng);
+    // still counts while the image is prepared (required by Safari).
+    const pngBlob = createPngBlob();
     pngBlob.catch(() => {}); // Reported through clipboard.write below
 
     navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })])
-        .then(() => showFloatingMessage('已複製封面圖片'))
+        .then(() => showFloatingMessage(successMessage))
         .catch((error) => {
-            console.error('Failed to copy poster image:', error);
+            console.error('Failed to copy image:', error);
             showFloatingMessage('複製圖片失敗');
         });
 }
@@ -222,7 +277,10 @@ async function convertImageToPng(blob) {
     canvas.height = bitmap.height;
     canvas.getContext('2d').drawImage(bitmap, 0, 0);
     bitmap.close();
+    return canvasToPng(canvas);
+}
 
+function canvasToPng(canvas) {
     return new Promise((resolve, reject) => {
         canvas.toBlob((png) => {
             if (png) {

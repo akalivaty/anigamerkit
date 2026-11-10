@@ -9,7 +9,7 @@ const SETTINGS_SCHEMA = [
     {
         key: 'showVideoPoster',
         checkboxId: 'showVideoPosterCheckbox',
-        label: '影片頁面顯示封面圖，右鍵可複製封面'
+        label: '影片頁面顯示封面圖，右鍵可複製封面或當前畫面'
     },
     {
         key: 'enableFloatingVideo',
