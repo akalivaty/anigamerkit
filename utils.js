@@ -495,10 +495,16 @@ function injectStyles() {
             outline-offset: 2px;
         }
 
+        /* Theme color of the Apply button; white text on it is only ~2.2:1, so use a deep teal (~7:1) */
         .anigamerkit-toolbar-toggle.is-active {
             border-color: rgb(64, 195, 221);
-            background-color: rgba(64, 195, 221, 0.9);
-            color: white;
+            background-color: rgb(64, 195, 221);
+            color: rgb(6, 42, 51);
+        }
+
+        .anigamerkit-toolbar-toggle.is-active:hover:not(:disabled) {
+            border-color: rgb(96, 208, 230);
+            background-color: rgb(96, 208, 230);
         }
 
         .anigamerkit-toolbar-toggle:disabled {
