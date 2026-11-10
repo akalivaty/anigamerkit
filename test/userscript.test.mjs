@@ -397,3 +397,26 @@ test('release notes group conventional commits and skip release bumps', async ()
   assert.doesNotMatch(notes, /v1\.3\.0|Co-Authored-By/);
   assert.equal(formatReleaseNotes([]), '');
 });
+
+test('continuous play acts on the quiz first, then the end-of-episode mask', async () => {
+  const { getContinuousPlayAction } = await loadFunctions('player_toolbar.js', ['getContinuousPlayAction']);
+
+  assert.equal(getContinuousPlayAction({ quizOpen: true, maskVisible: true, hasNextEpisode: true }), 'skip-quiz');
+  assert.equal(getContinuousPlayAction({ quizOpen: false, maskVisible: false, hasNextEpisode: true }), null);
+  assert.equal(getContinuousPlayAction({ quizOpen: false, maskVisible: true, hasNextEpisode: true }), 'next');
+  assert.equal(getContinuousPlayAction({ quizOpen: false, maskVisible: true, hasNextEpisode: false }), 'end');
+});
+
+test('only marathon wraps from the last episode to the first one', async () => {
+  const { getFollowingEpisodeSn } = await loadFunctions('player_toolbar.js', ['getFollowingEpisodeSn']);
+  const sns = ['1', '2', '3'];
+
+  assert.equal(getFollowingEpisodeSn(sns, '1', false), '2');
+  assert.equal(getFollowingEpisodeSn(sns, '1', true), '2');
+  assert.equal(getFollowingEpisodeSn(sns, '3', false), null);
+  assert.equal(getFollowingEpisodeSn(sns, '3', true), '1');
+  assert.equal(getFollowingEpisodeSn(sns, '9', true), '1');
+  assert.equal(getFollowingEpisodeSn(['1'], '1', true), null);
+  assert.equal(getFollowingEpisodeSn([], '1', true), null);
+});
+

@@ -344,6 +344,53 @@ function injectStyles() {
             color: #777;
         }
 
+        .anigamerkit-player-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 0 0;
+        }
+
+        .anigamerkit-toolbar-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            border: 1px solid rgba(128, 128, 128, 0.45);
+            border-radius: 999px;
+            background: transparent;
+            color: inherit;
+            font-size: 14px;
+            line-height: 20px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+        }
+
+        .anigamerkit-toolbar-toggle .material-icons-round {
+            font-size: 18px;
+        }
+
+        .anigamerkit-toolbar-toggle:hover:not(:disabled) {
+            border-color: rgb(64, 195, 221);
+        }
+
+        .anigamerkit-toolbar-toggle:focus-visible {
+            outline: 2px solid rgb(64, 195, 221);
+            outline-offset: 2px;
+        }
+
+        .anigamerkit-toolbar-toggle.is-active {
+            border-color: rgb(64, 195, 221);
+            background-color: rgba(64, 195, 221, 0.9);
+            color: white;
+        }
+
+        .anigamerkit-toolbar-toggle:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
         #custom-input-box {
             z-index: 2147483647 !important;
         }
@@ -368,6 +415,8 @@ function filterPage(DEFAULT_SETTINGS) {
             triggerShowMoreButton();
         }
     } else if (pageType === 'video') {
+        initializePlayerToolbar(DEFAULT_SETTINGS);
+
         if (GM_getValue('showVideoPoster', DEFAULT_SETTINGS.showVideoPoster)) {
             showVideoPoster();
         }

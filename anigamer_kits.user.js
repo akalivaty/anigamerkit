@@ -22,6 +22,7 @@ onDomReady(() => {
         showVideoPoster: true,
         enableFloatingVideo: true,
         floatingVideoWidthPercent: 30,
+        continuousPlayMode: 'off',
         enableCenteredDanmukuBox: true,
         enableSpeedControlShortcut: true,
         enableAutoInputPaymentInfo: true,
