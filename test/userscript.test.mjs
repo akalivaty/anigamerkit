@@ -352,3 +352,19 @@ test('getPosterUrl prefers the video poster, then data-video-poster, then JSON-L
   );
   assert.equal(await load(posterDocument()), null);
 });
+
+test('release notes group conventional commits and skip release bumps', async () => {
+  const { formatReleaseNotes } = await import('../scripts/release-notes.mjs');
+  const notes = formatReleaseNotes([
+    { hash: 'c'.repeat(40), subject: 'chore(release): v1.3.0', body: '' },
+    { hash: 'b'.repeat(40), subject: 'fix(danmuku): keep focus', body: 'Details here.\n\nCo-Authored-By: Someone <x@example.com>' },
+    { hash: 'a'.repeat(40), subject: 'feat!: new menu', body: '' },
+    { hash: 'd'.repeat(40), subject: 'Tweak things', body: '' }
+  ]);
+
+  assert.match(notes, /## ✨ feat\n\n- \*\*BREAKING\*\* new menu \(aaaaaaa\)/);
+  assert.match(notes, /## 🐛 fix\n\n- \*\*danmuku:\*\* keep focus \(bbbbbbb\)\n\n  Details here\./);
+  assert.match(notes, /## 🔧 other\n\n- Tweak things \(ddddddd\)/);
+  assert.doesNotMatch(notes, /v1\.3\.0|Co-Authored-By/);
+  assert.equal(formatReleaseNotes([]), '');
+});
