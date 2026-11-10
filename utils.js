@@ -512,8 +512,47 @@ function injectStyles() {
             cursor: default;
         }
 
+        /* Positioned against the player, so it follows inline, floating and fullscreen layouts */
         #custom-input-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 2147483647 !important;
+            width: min(520px, 80%);
+            height: auto;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 12px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            backdrop-filter: blur(18px) saturate(180%);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            color: #fff;
+            caret-color: rgb(64, 195, 221);
+            font-size: 16px;
+            line-height: 1.4;
+            letter-spacing: 0.02em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #custom-input-box::placeholder {
+            color: rgba(255, 255, 255, 0.65);
+            opacity: 1;
+        }
+
+        #custom-input-box:focus {
+            border-color: rgba(64, 195, 221, 0.8);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.35),
+                0 0 0 3px rgba(64, 195, 221, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
         }
     `;
     const style = document.createElement('style');

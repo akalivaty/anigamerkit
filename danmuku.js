@@ -37,20 +37,8 @@ function toggleDanmukuBox(event) {
         danmukuBox.type = 'text';
         danmukuBox.placeholder = '輸入彈幕...';
         danmukuBox.autocomplete = 'off';
+        // Layout and glass look live in the #custom-input-box rule in utils.js
         danmukuBox.style.display = 'none';
-        // Positioned against the player, so it follows inline, floating and fullscreen layouts
-        danmukuBox.style.position = 'absolute';
-        danmukuBox.style.top = '50%';
-        danmukuBox.style.left = '50%';
-        danmukuBox.style.transform = 'translate(-50%, -50%)';
-        danmukuBox.style.zIndex = '1000';
-        danmukuBox.style.padding = '10px';
-        danmukuBox.style.width = 'min(500px, 80%)';
-        danmukuBox.style.boxSizing = 'border-box';
-        danmukuBox.style.borderRadius = '8px';
-        danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-        danmukuBox.style.fontSize = '16px';
-        danmukuBox.style.color = 'black';
 
         // Keep typing and clicks inside the box from reaching the player's own shortcuts
         for (const type of ['keydown', 'keyup', 'keypress', 'click', 'dblclick']) {
