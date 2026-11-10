@@ -351,7 +351,7 @@ function filterPage(DEFAULT_SETTINGS) {
         }
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
-            document.addEventListener('fullscreenchange', updateDanmukuBoxPosition);
+            document.addEventListener('fullscreenchange', attachDanmukuBoxToPlayer);
             document.addEventListener('keydown', toggleDanmukuBox, true);
         }
 

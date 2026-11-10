@@ -35,25 +35,35 @@ function toggleDanmukuBox(event) {
         danmukuBox = document.createElement('input');
         danmukuBox.id = 'custom-input-box';
         danmukuBox.type = 'text';
-        danmukuBox.placeholder = 'Enter danmuku here';
+        danmukuBox.placeholder = '輸入彈幕...';
         danmukuBox.autocomplete = 'off';
         danmukuBox.style.display = 'none';
+        // Positioned against the player, so it follows inline, floating and fullscreen layouts
         danmukuBox.style.position = 'absolute';
+        danmukuBox.style.top = '50%';
+        danmukuBox.style.left = '50%';
+        danmukuBox.style.transform = 'translate(-50%, -50%)';
         danmukuBox.style.zIndex = '1000';
         danmukuBox.style.padding = '10px';
-        danmukuBox.style.width = '500px';
+        danmukuBox.style.width = 'min(500px, 80%)';
+        danmukuBox.style.boxSizing = 'border-box';
         danmukuBox.style.borderRadius = '8px';
         danmukuBox.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
         danmukuBox.style.fontSize = '16px';
         danmukuBox.style.color = 'black';
 
-        document.documentElement.appendChild(danmukuBox);
+        // Keep typing and clicks inside the box from reaching the player's own shortcuts
+        for (const type of ['keydown', 'keyup', 'keypress', 'click', 'dblclick']) {
+            danmukuBox.addEventListener(type, (event) => event.stopPropagation());
+        }
 
         danmukuBox.addEventListener('compositionstart', () => { isComposing = true; });
         danmukuBox.addEventListener('compositionend', () => { isComposing = false; });
     }
 
-    getVideoRect();
+    if (!attachDanmukuBoxToPlayer()) {
+        return;
+    }
 
     if (danmukuBox.style.display === 'none' || danmukuBox.style.display === '') {
         danmukuBox.style.display = 'block';
@@ -82,33 +92,38 @@ function closeDanmukuBox() {
     document.removeEventListener('keydown', listenDanmuku, true);
 }
 
-function updateDanmukuBoxPosition() {
+/**
+ * Move the box into the player (or the fullscreen element wrapping it) so CSS keeps it centered.
+ * @returns {boolean} Whether a player container was found
+ **/
+function attachDanmukuBoxToPlayer() {
     if (!danmukuBox) {
-        return;
+        return false;
     }
 
-    setTimeout(() => {
-        getVideoRect();
-    }, 50);
-
-    // Keep focus in the danmuku box if it was open when the layout changed
-    if (danmukuBox.style.display === 'block') {
-        danmukuBox.focus();
+    const fullscreenElement = document.fullscreenElement;
+    const container = fullscreenElement?.querySelector?.('video')
+        ? fullscreenElement
+        : document.querySelector('.videoframe');
+    if (!container) {
+        console.error('Video player not found');
+        return false;
     }
-}
 
-function getVideoRect() {
-    const videoElement = document.querySelector('.videoframe');
-    if (videoElement) {
-        const videoRect = videoElement.getBoundingClientRect();
-        const vertialOffset = videoRect.top + videoRect.height / 2;
-        const horizontalOffset = videoRect.left + videoRect.width / 2;
-        danmukuBox.style.top = `${vertialOffset}px`;
-        danmukuBox.style.left = `${horizontalOffset}px`;
-        danmukuBox.style.transform = 'translate(-50%, -50%)';
-    } else {
-        console.error('Video element not found');
+    // top/left 50% resolve against the nearest positioned ancestor
+    if (getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
     }
+
+    if (danmukuBox.parentNode !== container) {
+        const wasOpen = danmukuBox.style.display === 'block';
+        container.appendChild(danmukuBox);
+        // Re-parenting drops focus
+        if (wasOpen) {
+            danmukuBox.focus();
+        }
+    }
+    return true;
 }
 
 function listenDanmuku(event) {

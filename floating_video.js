@@ -146,12 +146,6 @@ function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_
         && videoElement.readyState >= 2
     );
 
-    const updateDanmukuPosition = () => {
-        if (typeof updateDanmukuBoxPosition === 'function') {
-            updateDanmukuBoxPosition();
-        }
-    };
-
     const applyFloatingRect = (rect) => {
         if (!playerElement) {
             return;
@@ -180,7 +174,6 @@ function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_
             width,
             height
         });
-        updateDanmukuPosition();
     };
 
     const startPointerInteraction = (event, mode, direction = '') => {
@@ -248,7 +241,6 @@ function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_
                 if (mode === 'resize') {
                     hasManualSize = true;
                 }
-                updateDanmukuPosition();
             }
         };
 
@@ -301,7 +293,6 @@ function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_
         if (observer && playerElement.isConnected) {
             observer.observe(playerElement);
         }
-        updateDanmukuPosition();
     };
 
     const enterFloatingMode = () => {
@@ -399,18 +390,9 @@ function initializeFloatingVideo(getWidthPercent = () => FLOATING_VIDEO_DEFAULT_
                 window.innerWidth,
                 window.innerHeight
             ));
-            updateDanmukuPosition();
         });
         // Apply a new width from the settings panel right away
         window.addEventListener('anigamerkit:settings-saved', updateFloatingSize);
-        if (typeof ResizeObserver === 'function') {
-            const resizeObserver = new ResizeObserver(() => {
-                if (isFloating) {
-                    updateDanmukuPosition();
-                }
-            });
-            resizeObserver.observe(playerElement);
-        }
         return true;
     };
 
