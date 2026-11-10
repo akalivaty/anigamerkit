@@ -27,7 +27,17 @@ const SETTINGS_SCHEMA = [
     {
         key: 'enableCenteredDanmukuBox',
         checkboxId: 'centeredDanmukuBoxCheckbox',
-        label: '啟用浮動彈幕輸入框 (Tab)'
+        label: '啟用浮動彈幕輸入框 (Tab)，不透明度',
+        input: {
+            key: 'danmukuBoxOpacity',
+            id: 'danmukuBoxOpacity',
+            type: 'range',
+            min: 0,
+            max: 100,
+            unit: '%',
+            // Preview on the open box while dragging; Apply saves it
+            onInput: (value) => applyDanmukuBoxOpacity(value)
+        }
     },
     {
         key: 'enableSkipVideo',
@@ -213,6 +223,31 @@ function createOption(setting, isDarkMode) {
             }
             inputBox.step = '1';
         }
+        if (setting.input.type === 'range') {
+            inputBox.className = 'anigamerkit-settings-range';
+            inputBox.min = setting.input.min;
+            inputBox.max = setting.input.max;
+            inputBox.step = '1';
+            inputBox.value = setting.input.value ?? '';
+
+            const valueLabel = document.createElement('span');
+            valueLabel.className = 'anigamerkit-settings-range-value';
+            if (isDarkMode) {
+                valueLabel.classList.add('anigamerkit-settings-dark-text');
+            }
+            const showValue = () => {
+                valueLabel.textContent = `${inputBox.value}${setting.input.unit ?? ''}`;
+            };
+            showValue();
+            inputBox.addEventListener('input', () => {
+                showValue();
+                setting.input.onInput?.(Number(inputBox.value));
+            });
+
+            container.appendChild(inputBox);
+            container.appendChild(valueLabel);
+            return { setting, container, checkBox, inputBox };
+        }
         if (setting.input.uppercase) {
             inputBox.addEventListener('input', () => {
                 inputBox.value = inputBox.value.toUpperCase();
@@ -238,7 +273,7 @@ function saveOption(control, DEFAULT_SETTINGS) {
     const rawValue = inputBox.value.trim();
     let value = rawValue || previousValue;
 
-    if (inputSetting.type === 'number') {
+    if (inputSetting.type === 'number' || inputSetting.type === 'range') {
         const numericValue = Number(rawValue);
         const withinMax = inputSetting.max === undefined || numericValue <= inputSetting.max;
         value = rawValue !== '' && Number.isInteger(numericValue) && numericValue >= inputSetting.min && withinMax

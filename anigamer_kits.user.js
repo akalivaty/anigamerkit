@@ -24,6 +24,7 @@ onDomReady(() => {
         floatingVideoWidthPercent: 30,
         continuousPlayMode: 'off',
         enableCenteredDanmukuBox: true,
+        danmukuBoxOpacity: 35,
         enableSpeedControlShortcut: true,
         enableAutoInputPaymentInfo: true,
         enableSkipVideo: true,

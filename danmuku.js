@@ -62,6 +62,15 @@ function toggleDanmukuBox(event) {
     }
 }
 
+/**
+ * Set how dark the danmuku box's black tint is. Takes effect immediately, even while the box is open.
+ * @param {number} percent - Tint opacity from 0 (fully transparent) to 100 (solid black)
+ **/
+function applyDanmukuBoxOpacity(percent) {
+    const value = Math.min(100, Math.max(0, Number(percent) || 0));
+    document.documentElement.style.setProperty('--anigamerkit-danmuku-box-alpha', String(value / 100));
+}
+
 function closeDanmukuBox() {
     if (!danmukuBox || danmukuBox.style.display !== 'block') {
         return;

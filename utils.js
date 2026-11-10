@@ -174,6 +174,19 @@ function injectStyles() {
             outline: none;
         }
 
+        .anigamerkit-settings-range {
+            width: 100px;
+            margin-left: 8px;
+            accent-color: rgb(64, 195, 221);
+        }
+
+        .anigamerkit-settings-range-value {
+            min-width: 3.5em;
+            margin-left: 6px;
+            font-size: 14px;
+            text-align: left;
+        }
+
         .anigamerkit-settings-apply {
             flex-shrink: 0;
             align-self: center;
@@ -524,35 +537,29 @@ function injectStyles() {
             box-sizing: border-box;
             margin: 0;
             padding: 12px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 999px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
-            -webkit-backdrop-filter: blur(18px) saturate(180%);
-            backdrop-filter: blur(18px) saturate(180%);
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            /* Plain black tint, strength set from the settings panel via applyDanmukuBoxOpacity */
+            background: rgba(0, 0, 0, var(--anigamerkit-danmuku-box-alpha, 0.35));
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            box-shadow: none !important;
+            outline: none !important;
             color: #fff;
-            caret-color: rgb(64, 195, 221);
+            caret-color: #fff;
             font-size: 16px;
             line-height: 1.4;
             letter-spacing: 0.02em;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         #custom-input-box::placeholder {
-            color: rgba(255, 255, 255, 0.65);
+            color: rgba(255, 255, 255, 0.55);
             opacity: 1;
         }
 
+        /* No focus highlight: same look whether or not the box is focused */
         #custom-input-box:focus {
-            border-color: rgba(64, 195, 221, 0.8);
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.35),
-                0 0 0 3px rgba(64, 195, 221, 0.25),
-                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.18);
         }
     `;
     const style = document.createElement('style');
@@ -589,6 +596,7 @@ function filterPage(DEFAULT_SETTINGS) {
         }
 
         if (GM_getValue('enableCenteredDanmukuBox', DEFAULT_SETTINGS.enableCenteredDanmukuBox)) {
+            applyDanmukuBoxOpacity(GM_getValue('danmukuBoxOpacity', DEFAULT_SETTINGS.danmukuBoxOpacity));
             document.addEventListener('fullscreenchange', attachDanmukuBoxToPlayer);
             document.addEventListener('keydown', toggleDanmukuBox, true);
         }
