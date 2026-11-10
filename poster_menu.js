@@ -6,12 +6,21 @@ const POSTER_DOWNLOAD_TIMEOUT = 15000;
 let posterMenu = null;
 let posterMenuListeners = null;
 
+const EPISODE_POSTER_VIDEO_SELECTOR = '#ani_video_html5_api';
+const EPISODE_POSTER_WAIT_TIMEOUT = 30000;
+
 /**
- * Read the poster URL the server writes into the page.
- * Prefers the player's data-video-poster, falls back to the JSON-LD VideoObject.
+ * Read the current episode's poster URL.
+ * Prefers the <video> poster (the site updates it on in-page episode switches),
+ * then the server-rendered data-video-poster, then the JSON-LD VideoObject.
  * @returns {string|null}
  **/
 function getPosterUrl() {
+    const fromVideo = document.querySelector(EPISODE_POSTER_VIDEO_SELECTOR)?.getAttribute('poster');
+    if (fromVideo) {
+        return fromVideo;
+    }
+
     const fromData = document.querySelector('#video-container')?.dataset?.videoPoster;
     if (fromData) {
         return fromData;
@@ -31,6 +40,45 @@ function getPosterUrl() {
         }
     }
     return null;
+}
+
+/**
+ * Switching episodes (下一集 / episode list) keeps the same <video> and MediaSource
+ * and only swaps its poster attribute. Browsers show a poster only until the first
+ * frame is rendered, so the previous episode's last frame stays on screen.
+ * Cover the video with the new poster until playback starts.
+ **/
+function initializeEpisodePoster() {
+    waitForElement(EPISODE_POSTER_VIDEO_SELECTOR, EPISODE_POSTER_WAIT_TIMEOUT).then((video) => {
+        if (!video) {
+            return;
+        }
+
+        const overlay = document.createElement('img');
+        overlay.className = 'anigamerkit-episode-poster';
+        overlay.alt = '';
+        overlay.hidden = true;
+        // Right after the video so the player's own layers (stop mask, age gate, controls) stay on top
+        video.after(overlay);
+
+        const hide = () => {
+            overlay.hidden = true;
+            overlay.removeAttribute('src');
+        };
+
+        new MutationObserver((records) => {
+            const poster = video.getAttribute('poster');
+            const changed = records.some((record) => record.oldValue !== poster);
+            if (!poster) {
+                hide();
+            } else if (changed && video.paused) {
+                overlay.src = poster;
+                overlay.hidden = false;
+            }
+        }).observe(video, { attributes: true, attributeFilter: ['poster'], attributeOldValue: true });
+
+        video.addEventListener('playing', hide);
+    });
 }
 
 function initializePosterMenu() {

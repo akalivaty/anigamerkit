@@ -303,11 +303,16 @@ test('dark theme cookie treats "0" and missing as disabled', async () => {
   assert.equal(isCookieFlagEnabled('1'), true);
 });
 
-test('getPosterUrl prefers data-video-poster and falls back to JSON-LD', async () => {
-  const posterDocument = ({ dataPoster = null, ldJson = [] } = {}) => ({
-    querySelector: (selector) => (selector === '#video-container' && dataPoster
-      ? { dataset: { videoPoster: dataPoster } }
-      : null),
+test('getPosterUrl prefers the video poster, then data-video-poster, then JSON-LD', async () => {
+  const posterDocument = ({ videoPoster = null, dataPoster = null, ldJson = [] } = {}) => ({
+    querySelector(selector) {
+      if (selector === '#ani_video_html5_api') {
+        return { getAttribute: (name) => (name === 'poster' ? videoPoster : null) };
+      }
+      return selector === '#video-container' && dataPoster
+        ? { dataset: { videoPoster: dataPoster } }
+        : null;
+    },
     querySelectorAll: () => ldJson.map((textContent) => ({ textContent }))
   });
   const load = async (document) => (await loadFunctions(
@@ -322,6 +327,14 @@ test('getPosterUrl prefers data-video-poster and falls back to JSON-LD', async (
       ldJson: ['{"@type":"VideoObject","thumbnailUrl":"https://p2.bahamut.com.tw/b.jpg"}']
     })),
     'https://p2.bahamut.com.tw/a.jpg'
+  );
+  // After an in-page episode switch only the <video> poster is up to date
+  assert.equal(
+    await load(posterDocument({
+      videoPoster: 'https://p2.bahamut.com.tw/next.jpg',
+      dataPoster: 'https://p2.bahamut.com.tw/a.jpg'
+    })),
+    'https://p2.bahamut.com.tw/next.jpg'
   );
   // Malformed block is skipped, VideoObject inside an array is found
   assert.equal(

@@ -279,6 +279,16 @@ function injectStyles() {
             cursor: nwse-resize;
         }
 
+        .anigamerkit-episode-poster {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+            pointer-events: none;
+        }
+
         .anigamerkit-context-menu {
             position: fixed;
             z-index: 2147483647;
@@ -425,6 +435,9 @@ function showVideoPoster() {
 
     // Right-click on the player: copy the poster image or URL
     initializePosterMenu();
+
+    // Show the next episode's poster after an in-page episode switch
+    initializeEpisodePoster();
 }
 
 function modifySpeed(event) {
