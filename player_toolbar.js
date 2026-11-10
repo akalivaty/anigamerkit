@@ -157,11 +157,7 @@ function createContinuousPlayButtons(DEFAULT_SETTINGS) {
     let watcher = null;
     const buttons = Object.entries(CONTINUOUS_PLAY_MODES).map(([buttonMode, { label, icon, title }]) => {
         const button = createToolbarToggle(label, icon, title);
-        button.addEventListener('click', () => {
-            const enabling = mode !== buttonMode;
-            setMode(enabling ? buttonMode : 'off');
-            showFloatingMessage(`已${enabling ? '開啟' : '關閉'}${label}`);
-        });
+        button.addEventListener('click', () => setMode(mode === buttonMode ? 'off' : buttonMode));
         return [buttonMode, button];
     });
 
