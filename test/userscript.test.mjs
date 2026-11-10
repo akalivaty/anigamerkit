@@ -272,12 +272,14 @@ test('modifySpeed ignores keys typed into text fields', async () => {
   assert.equal(video.playbackRate, 1);
 });
 
-test('skipVideo ignores modifier combos and text fields', async () => {
+test('skipVideo needs Shift + 1 and ignores other modifiers and text fields', async () => {
   const video = { duration: 1400, currentTime: 100 };
   const document = { querySelector: () => video };
   const { skipVideo } = await loadFunctions('utils.js', ['skipVideo'], { document });
   const keyEvent = (extra) => ({
-    key: '1',
+    key: '!',
+    code: 'Digit1',
+    shiftKey: true,
     target: { tagName: 'DIV' },
     preventDefault() {},
     stopPropagation() {},
@@ -288,6 +290,9 @@ test('skipVideo ignores modifier combos and text fields', async () => {
   skipVideo(keyEvent({ ctrlKey: true }), 89);
   skipVideo(keyEvent({ metaKey: true }), 89);
   skipVideo(keyEvent({ target: { tagName: 'TEXTAREA' } }), 89);
+  // Plain 1 no longer skips
+  skipVideo(keyEvent({ key: '1', shiftKey: false }), 89);
+  skipVideo(keyEvent({ key: '!', code: 'Numpad1' }), 89);
   assert.equal(video.currentTime, 100);
 
   skipVideo(keyEvent(), 89);

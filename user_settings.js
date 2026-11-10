@@ -32,7 +32,7 @@ const SETTINGS_SCHEMA = [
     {
         key: 'enableSkipVideo',
         checkboxId: 'enableSkipVideoCheckbox',
-        label: '啟用跳過秒數 (數字 1 鍵)',
+        label: '啟用跳過秒數 (Shift + 1)',
         input: {
             key: 'skipDuration',
             id: 'skipDuration',

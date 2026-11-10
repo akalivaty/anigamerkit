@@ -481,7 +481,9 @@ function modifySpeed(event) {
 }
 
 function skipVideo(event, duration) {
-    if (event.key !== '1' || hasCommandModifier(event) || isEditableTarget(event.target)) {
+    // Match the physical key: Shift + 1 types '!' or other symbols depending on the keyboard layout
+    if (event.code !== 'Digit1' || !event.shiftKey
+        || hasCommandModifier(event) || isEditableTarget(event.target)) {
         return;
     }
 
