@@ -344,6 +344,121 @@ function injectStyles() {
             color: #777;
         }
 
+        .anigamerkit-quiz-button {
+            position: fixed;
+            right: 70px;
+            bottom: 20px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: rgba(64, 195, 221, 0.9);
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2147483647;
+        }
+
+        .anigamerkit-quiz-button:disabled {
+            cursor: progress;
+            opacity: 0.6;
+        }
+
+        .anigamerkit-quiz-dialog {
+            width: min(480px, calc(100vw - 32px));
+            box-sizing: border-box;
+            padding: 16px 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #222;
+            font-size: 15px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .anigamerkit-quiz-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .anigamerkit-quiz-dialog.is-dark {
+            border-color: #4a4a4a;
+            background-color: #282828;
+            color: #eee;
+        }
+
+        .anigamerkit-quiz-title {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .anigamerkit-quiz-game {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .anigamerkit-quiz-question {
+            margin: 12px 0;
+            line-height: 1.6;
+        }
+
+        .anigamerkit-quiz-options {
+            display: grid;
+            gap: 8px;
+        }
+
+        .anigamerkit-quiz-option {
+            padding: 8px 12px;
+            border: 1px solid rgba(128, 128, 128, 0.45);
+            border-radius: 6px;
+            background: transparent;
+            color: inherit;
+            font-size: 15px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .anigamerkit-quiz-option:hover:not(:disabled),
+        .anigamerkit-quiz-option.is-selected {
+            border-color: rgb(64, 195, 221);
+            background-color: rgba(64, 195, 221, 0.18);
+        }
+
+        .anigamerkit-quiz-option:disabled {
+            cursor: default;
+        }
+
+        .anigamerkit-quiz-result {
+            margin: 12px 0 0;
+            font-weight: bold;
+        }
+
+        .anigamerkit-quiz-result.is-correct {
+            color: rgb(40, 167, 69);
+        }
+
+        .anigamerkit-quiz-result.is-wrong {
+            color: rgb(220, 53, 69);
+        }
+
+        .anigamerkit-quiz-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .anigamerkit-quiz-action {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(64, 195, 221, 0.9);
+            color: white;
+            cursor: pointer;
+        }
+
         .anigamerkit-player-toolbar {
             display: flex;
             flex-wrap: wrap;

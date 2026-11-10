@@ -34,4 +34,5 @@ onDomReady(() => {
     injectStyles();
     filterPage(DEFAULT_SETTINGS);
     createFloatingButton(DEFAULT_SETTINGS);
+    createDailyQuizButton();
 });

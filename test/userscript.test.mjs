@@ -420,3 +420,21 @@ test('only marathon wraps from the last episode to the first one', async () => {
   assert.equal(getFollowingEpisodeSn([], '1', true), null);
 });
 
+test('quiz answer result reports wrong answers, errors and the gift', async () => {
+  class DOMParser {
+    parseFromString(html) {
+      return { body: { textContent: html.replace(/<[^>]*>/g, '') } };
+    }
+  }
+  const { getQuizAnswerResult } = await loadFunctions('daily_quiz.js', ['getQuizAnswerResult'], { DOMParser });
+
+  assert.deepEqual({ ...getQuizAnswerResult({ error: 1, msg: '答題錯誤' }) }, {
+    correct: false, message: '很遺憾答錯囉！可以再答一次，或先上動畫瘋粉絲團找答案喔！'
+  });
+  assert.deepEqual({ ...getQuizAnswerResult({ error: 1, msg: '今日已經答過題目了' }) }, {
+    correct: false, message: '今日已經答過題目了'
+  });
+  assert.deepEqual({ ...getQuizAnswerResult({ gift: '<b>巴幣 10</b>' }) }, {
+    correct: true, message: '恭喜答對！巴幣 10'
+  });
+});
